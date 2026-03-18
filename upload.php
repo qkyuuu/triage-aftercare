@@ -1,16 +1,17 @@
 <?php
-header("Content-Type: application/json");
+header("Content-Type: text/plain"); // Change from application/json to plain text
+
 require_once 'db_config.php';
 
-// Disable warnings/notices that might break JSON output
-error_reporting(E_ERROR | E_PARSE);
+// Show all errors for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 $input = file_get_contents("php://input");
 $request = json_decode($input, true);
 
 if (!$request || !isset($request['data'])) {
-    echo json_encode(["status" => "error", "error" => "No data received"]);
-    exit;
+    die("No data received\nRaw input:\n" . $input);
 }
 
 $region = $request['region'];
@@ -21,7 +22,7 @@ $insertedCount = 0;
 $skippedCount = 0;
 $otherErrors = [];
 
-foreach ($dataRows as $row) {
+foreach ($dataRows as $i => $row) {
     $inbound   = isset($row['Inbound Count (SUM)']) ? (int)$row['Inbound Count (SUM)'] : 0;
     $msgDate   = $row['Inbound Message Date'] ?? null;
     $stage     = $row['Routing Stage (in) (Message)'] ?? '';
@@ -47,37 +48,15 @@ foreach ($dataRows as $row) {
         $msgType, $network, $sentiment, $uID
     ];
 
-    $stmt = @sqlsrv_query($conn, $sql, $params); // suppress warnings
+    $stmt = @sqlsrv_query($conn, $sql, $params);
 
     if ($stmt) {
         $insertedCount++;
     } else {
-        $errorInfo = sqlsrv_errors() ?: [];
-        $isDuplicate = false;
-        foreach ($errorInfo as $err) {
-            if (strpos(strtoupper($err['message']), 'UNIQUE') !== false) {
-                $isDuplicate = true;
-                break;
-            }
-        }
-        if ($isDuplicate) {
-            $skippedCount++;
-        } else {
-            $otherErrors[] = $errorInfo;
-        }
+        echo "\n--- ERROR on row $i ---\n";
+        print_r(sqlsrv_errors());
     }
 }
 
-$response = ["status" => "success"];
-$msgParts = [];
-if ($insertedCount > 0) $msgParts[] = "$insertedCount new records added";
-if ($skippedCount > 0) $msgParts[] = "$skippedCount duplicates skipped";
-
-if (!empty($otherErrors)) {
-    $response = ["status" => "error", "error" => json_encode($otherErrors)];
-} else {
-    $response["message"] = implode(". ", $msgParts) ?: "No records processed.";
-}
-
-echo json_encode($response);
-exit;
+echo "\nProcessed " . count($dataRows) . " rows. Added $insertedCount records.\n";
+echo "Duplicates/skipped: $skippedCount\n";
