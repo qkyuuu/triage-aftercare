@@ -45,15 +45,15 @@ foreach ($dataRows as $row) {
         $stmt = sqlsrv_query($conn, $sql, $params);
 
         if ($stmt) {
-    $insertedCount++;
-} else {
-    // This converts the error to a string so it doesn't crash the JSON parser
-    $errors = sqlsrv_errors();
-    die(json_encode([
-        "status" => "error", 
-        "message" => "SQL Error on row $i: " . $errors[0]['message']
-    ]));
-}
+        $insertedCount++;
+    } else {
+        // Get the specific message
+        $sqlErrors = sqlsrv_errors();
+        $cleanError = $sqlErrors[0]['message'];
+        
+        // Send it back as a simple string so it doesn't crash the JSON
+        die("Error on row $i: " . $cleanError);
+    }
     }
 }
 
