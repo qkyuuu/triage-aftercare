@@ -59,12 +59,12 @@ foreach ($dataRows as $i => $row) {
         } else {
             // If the SQL "Engine" fails, we send a JSON error instead of a raw Array
             $sqlErrors = sqlsrv_errors();
-            $cleanError = isset($sqlErrors[0]['message']) ? $sqlErrors[0]['message'] : 'Unknown SQL Error';
+            // $cleanError = isset($sqlErrors[0]['message']) ? $sqlErrors[0]['message'] : 'Unknown SQL Error';
             
-            die(json_encode([
-                "status" => "error", 
-                "message" => "Error on row " . ($i + 1) . ": " . $cleanError
-            ]));
+            // die(json_encode([
+            //     "status" => "error", 
+            //     "message" => "Error on row " . ($i + 1) . ": " . $cleanError
+            // ]));
         }
     }
 }
