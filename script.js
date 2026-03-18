@@ -248,28 +248,32 @@ async function saveToDatabase() {
       }),
     });
 
-    const result = await response.json();
+    // 1. Get the raw text first to check if it's actually JSON
+    const text = await response.text();
+    
+    let result;
+    try {
+        result = JSON.parse(text);
+    } catch (e) {
+        // If it's NOT JSON, show the raw text (this is where the 'Array' lives!)
+        throw new Error("Server sent back non-JSON: " + text.substring(0, 100));
+    }
 
-    // ✅ Corrected logic
     if (result.status === "success") {
       statusDiv.className = "mt-2 small fw-bold text-success text-center";
       statusDiv.innerHTML = `✔ ${result.message}`;
       showToast(result.message, "success");
 
-      // Cleanup
       tempUploadData = null;
       if (fileInput) fileInput.value = "";
-    } else if (result.error) {
-      // Handle duplicate key error from SQL Server
-      if (JSON.stringify(result.error).includes("UNIQUE")) {
-        const msg = "Some records already exist (duplicates skipped).";
-        statusDiv.className = "mt-2 small fw-bold text-warning text-center";
-        statusDiv.innerHTML = `⚠ ${msg}`;
-        showToast(msg, "warning");
-      } else {
-        throw new Error(result.error);
-      }
+    } else {
+      // Handle errors sent by PHP
+      const errorMsg = result.message || result.error || "Unknown Error";
+      statusDiv.className = "mt-2 small fw-bold text-danger text-center";
+      statusDiv.innerHTML = `❌ ${errorMsg}`;
+      showToast(errorMsg, "danger");
     }
+
   } catch (error) {
     console.error("Save Error:", error);
     statusDiv.className = "mt-2 small fw-bold text-danger text-center";
