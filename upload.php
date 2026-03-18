@@ -1,70 +1,45 @@
 <?php
-header("Content-Type: application/json"); // Keep it JSON so script.js doesn't crash
-
+header("Content-Type: application/json"); 
 require_once 'db_config.php';
 
+// Turn off raw error display so it doesn't break JSON
+ini_set('display_errors', 0); 
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Hide raw PHP errors from breaking the JSON
 
 $input = file_get_contents("php://input");
 $request = json_decode($input, true);
 
-if (!$request || !isset($request['data'])) {
-    echo json_encode(["status" => "error", "message" => "No data received"]);
+if (!$request) {
+    echo json_encode(["status" => "error", "message" => "Invalid JSON input received by PHP."]);
     exit;
 }
 
-$region = $request['region'];
-$date = $request['date'];
-$dataRows = $request['data'];
-
+$dataRows = $request['data'] ?? [];
 $insertedCount = 0;
-$errors = [];
+$debugError = "";
 
 foreach ($dataRows as $i => $row) {
-    // Basic mapping
-    $inbound   = isset($row['Inbound Count (SUM)']) ? (int)$row['Inbound Count (SUM)'] : 0;
-    $msgDate   = $row['Inbound Message Date'] ?? null;
-    $uID       = $row['Universal Message ID'] ?? '';
-
+    $uID = $row['Universal Message ID'] ?? '';
     if (empty($uID)) continue;
 
-    $sql = "INSERT INTO triage_uploads (
-        region, upload_date, inbound_message_date, inbound_count,
-        routing_stage, global_area, macro_tracker, account_handle,
-        message_type, social_network, sentiment, universal_message_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // Hardcoded simple query to test if the connection/table is the problem
+    $sql = "INSERT INTO triage_uploads (universal_message_id, region) VALUES (?, ?)";
+    $params = [$uID, $request['region']];
 
-    $params = [
-        $region, $date, $msgDate, $inbound,
-        $row['Routing Stage (in) (Message)'] ?? '',
-        $row['Country (in) (Message)'] ?? '',
-        $row['Macro Tracker (Message)'] ?? '',
-        $row['Account'] ?? '',
-        $row['Message Type'] ?? '',
-        $row['Social Network'] ?? '',
-        $row['Sentiment'] ?? '',
-        $uID
-    ];
-
-    // REMOVED the '@' so we can see the error
     $stmt = sqlsrv_query($conn, $sql, $params);
 
     if ($stmt) {
         $insertedCount++;
     } else {
-        // Capture the EXACT error from SQL Server
-        $errors[] = [
-            "row" => $i,
-            "details" => sqlsrv_errors()
-        ];
-        // Break after the first error so we don't flood the screen
-        break; 
+        // We catch the error and convert it to a string immediately
+        $rawErrors = sqlsrv_errors();
+        $debugError = "Row $i Error: " . ($rawErrors[0]['message'] ?? 'Unknown SQL Error');
+        break; // Stop at the first error so we can read it
     }
 }
 
 echo json_encode([
-    "status" => count($errors) > 0 ? "error" : "success",
-    "inserted" => $insertedCount,
-    "sql_errors" => $errors
+    "status" => $debugError ? "error" : "success",
+    "message" => $debugError ?: "Successfully uploaded $insertedCount rows",
+    "inserted" => $insertedCount
 ]);
