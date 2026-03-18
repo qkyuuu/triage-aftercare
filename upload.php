@@ -1,28 +1,31 @@
 <?php
-header("Content-Type: text/plain"); // Change from application/json to plain text
+// We keep it as plain text so the browser just displays the errors as they happen
+header("Content-Type: text/plain"); 
 
 require_once 'db_config.php';
 
-// Show all errors for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 $input = file_get_contents("php://input");
 $request = json_decode($input, true);
 
+// --- COMMENTED OUT FOR DEBUGGING ---
+/*
 if (!$request || !isset($request['data'])) {
     die("No data received\nRaw input:\n" . $input);
 }
+*/
 
-$region = $request['region'];
-$date = $request['date'];
-$dataRows = $request['data'];
+$region = $request['region'] ?? 'N/A';
+$date = $request['date'] ?? 'N/A';
+$dataRows = $request['data'] ?? [];
 
 $insertedCount = 0;
 $skippedCount = 0;
-$otherErrors = [];
 
 foreach ($dataRows as $i => $row) {
+    // Mapping your columns
     $inbound   = isset($row['Inbound Count (SUM)']) ? (int)$row['Inbound Count (SUM)'] : 0;
     $msgDate   = $row['Inbound Message Date'] ?? null;
     $stage     = $row['Routing Stage (in) (Message)'] ?? '';
@@ -48,15 +51,19 @@ foreach ($dataRows as $i => $row) {
         $msgType, $network, $sentiment, $uID
     ];
 
-    $stmt = @sqlsrv_query($conn, $sql, $params);
+    // Removed the '@' symbol so errors aren't suppressed
+    $stmt = sqlsrv_query($conn, $sql, $params);
 
     if ($stmt) {
         $insertedCount++;
     } else {
-        echo "\n--- ERROR on row $i ---\n";
-        print_r(sqlsrv_errors());
+        // This is what was causing the "Unexpected token A" error.
+        // It will now show clearly in your console/network tab.
+        echo "\n--- SQL ERROR ON ROW $i ---\n";
+        var_dump(sqlsrv_errors()); 
     }
 }
 
-echo "\nProcessed " . count($dataRows) . " rows. Added $insertedCount records.\n";
-echo "Duplicates/skipped: $skippedCount\n";
+echo "\n--- SUMMARY ---\n";
+echo "Processed " . count($dataRows) . " rows.\n";
+echo "Successfully Added: $insertedCount\n";
