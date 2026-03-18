@@ -1,45 +1,63 @@
 <?php
-header("Content-Type: application/json"); 
+header("Content-Type: application/json");
 require_once 'db_config.php';
-
-// Turn off raw error display so it doesn't break JSON
-ini_set('display_errors', 0); 
-error_reporting(E_ALL);
 
 $input = file_get_contents("php://input");
 $request = json_decode($input, true);
 
-if (!$request) {
-    echo json_encode(["status" => "error", "message" => "Invalid JSON input received by PHP."]);
-    exit;
+if (!$request || !isset($request['data'])) {
+    die(json_encode(["status" => "error", "error" => "No data received"]));
 }
 
-$dataRows = $request['data'] ?? [];
+$region = $request['region'];
+$date = $request['date']; 
+$dataRows = $request['data'];
+
 $insertedCount = 0;
-$debugError = "";
 
-foreach ($dataRows as $i => $row) {
-    $uID = $row['Universal Message ID'] ?? '';
-    if (empty($uID)) continue;
+foreach ($dataRows as $row) {
 
-    // Hardcoded simple query to test if the connection/table is the problem
-    $sql = "INSERT INTO triage_uploads (universal_message_id, region) VALUES (?, ?)";
-    $params = [$uID, $request['region']];
+    $inbound   = isset($row['Inbound Count (SUM)']) ? (int)$row['Inbound Count (SUM)'] : 0;
+    $msgDate   = $row['Inbound Message Date'] ?? null; 
+    $stage     = $row['Routing Stage (in) (Message)'] ?? '';
+    $area      = $row['Country (in) (Message)'] ?? ''; 
+    $macro     = $row['Macro Tracker (Message)'] ?? ''; 
+    $account   = $row['Account'] ?? '';
+    $msgType   = $row['Message Type'] ?? '';
+    $network   = $row['Social Network'] ?? '';
+    $sentiment = $row['Sentiment'] ?? '';
+    $uID       = $row['Universal Message ID'] ?? '';
 
-    $stmt = sqlsrv_query($conn, $sql, $params);
+    if (!empty($uID)) {
 
-    if ($stmt) {
-        $insertedCount++;
-    } else {
-        // We catch the error and convert it to a string immediately
-        $rawErrors = sqlsrv_errors();
-        $debugError = "Row $i Error: " . ($rawErrors[0]['message'] ?? 'Unknown SQL Error');
-        break; // Stop at the first error so we can read it
+        $sql = "INSERT INTO triage_uploads (
+            region, upload_date, inbound_message_date, inbound_count,
+            routing_stage, global_area, macro_tracker, account_handle,
+            message_type, social_network, sentiment, universal_message_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $params = [
+            $region, $date, $msgDate, $inbound,
+            $stage, $area, $macro, $account,
+            $msgType, $network, $sentiment, $uID
+        ];
+
+        $stmt = sqlsrv_query($conn, $sql, $params);
+
+        if ($stmt) {
+            $insertedCount++;
+        } else {
+            echo json_encode([
+                "status" => "error",
+                "error" => sqlsrv_errors()
+            ]);
+            exit;
+        }
     }
 }
 
 echo json_encode([
-    "status" => $debugError ? "error" : "success",
-    "message" => $debugError ?: "Successfully uploaded $insertedCount rows",
-    "inserted" => $insertedCount
+    "status" => "success", 
+    "message" => "Processed " . count($dataRows) . " rows. Added $insertedCount records."
 ]);
+?>
