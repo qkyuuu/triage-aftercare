@@ -221,6 +221,36 @@ document.getElementById("csvUpload").addEventListener("change", function (e) {
   }
 });
 
+//SENDING OF EMAIL
+function sendReportEmail() {
+  const start = document.getElementById("startDate").value;
+  const end = document.getElementById("endDate").value;
+
+  fetch("send_email.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      metrics: dashboardMetrics,
+      dateRange: `${start} to ${end}`
+    })
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.success) {
+      showToast("Email sent successfully!", "success");
+    } else {
+      showToast("Failed to send email", "danger");
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    showToast("Error sending email", "danger");
+  });
+}
+
+
 // 3. SAVE TO DATABASE LOGIC
 async function saveToDatabase() {
   const statusDiv = document.getElementById("uploadStatus");
@@ -657,3 +687,4 @@ function captureDashboard() {
       showToast("Capture failed. Try scrolling to the top.", "danger");
     });
 }
+
