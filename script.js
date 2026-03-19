@@ -645,46 +645,46 @@ function showToast(message, type = "info") {
  * Precise Dashboard Capture
  * Targets only the report area, ignoring sidebar and topbar
  */
-function captureDashboard() {
-  // Target the specific container for the report
-  const element = document.querySelector(".report-container");
+// function captureDashboard() {
+//   // Target the specific container for the report
+//   const element = document.querySelector(".report-container");
 
-  if (!element) {
-    return showToast("Dashboard area not found.", "danger");
-  }
+//   if (!element) {
+//     return showToast("Dashboard area not found.", "danger");
+//   }
 
-  if (typeof showToast === "function") {
-    showToast("Generating report image...", "info");
-  }
+//   if (typeof showToast === "function") {
+//     showToast("Generating report image...", "info");
+//   }
 
-  const options = {
-    scale: 2, // High resolution
-    useCORS: true, // For external assets
-    backgroundColor: "#f5f6f8", // Matches your dashboard bg
-    // These settings prevent the sidebar/topbar overlap issues
-    scrollX: 0,
-    scrollY: -window.scrollY,
-    windowWidth: document.documentElement.offsetWidth,
-    windowHeight: document.documentElement.offsetHeight,
-  };
+//   const options = {
+//     scale: 2, // High resolution
+//     useCORS: true, // For external assets
+//     backgroundColor: "#f5f6f8", // Matches your dashboard bg
+//     // These settings prevent the sidebar/topbar overlap issues
+//     scrollX: 0,
+//     scrollY: -window.scrollY,
+//     windowWidth: document.documentElement.offsetWidth,
+//     windowHeight: document.documentElement.offsetHeight,
+//   };
 
-  html2canvas(element, options)
-    .then((canvas) => {
-      const image = canvas.toDataURL("image/jpeg", 0.9);
-      const link = document.createElement("a");
+//   html2canvas(element, options)
+//     .then((canvas) => {
+//       const image = canvas.toDataURL("image/jpeg", 0.9);
+//       const link = document.createElement("a");
 
-      const dateStr = new Date().toISOString().slice(0, 10);
-      link.download = `Triage_Report_${dateStr}.jpg`;
-      link.href = image;
-      link.click();
+//       const dateStr = new Date().toISOString().slice(0, 10);
+//       link.download = `Triage_Report_${dateStr}.jpg`;
+//       link.href = image;
+//       link.click();
 
-      if (typeof showToast === "function") {
-        showToast("Report image downloaded!", "success");
-      }
-    })
-    .catch((err) => {
-      console.error("Capture Error:", err);
-      showToast("Capture failed. Try scrolling to the top.", "danger");
-    });
-}
+//       if (typeof showToast === "function") {
+//         showToast("Report image downloaded!", "success");
+//       }
+//     })
+//     .catch((err) => {
+//       console.error("Capture Error:", err);
+//       showToast("Capture failed. Try scrolling to the top.", "danger");
+//     });
+// }
 
