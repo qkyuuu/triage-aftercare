@@ -13,7 +13,10 @@ $connectionOptions = [
 $conn = sqlsrv_connect($serverName, $connectionOptions);
 
 if( $conn === false ) {
-     header('Content-Type: application/json');
-     die(json_encode(["status" => "error", "message" => "Database connection failed"]));
+    header('Content-Type: application/json');
+    die(json_encode([
+        "status" => "error",
+        "message" => sqlsrv_errors()
+    ]));
 }
 ?>
