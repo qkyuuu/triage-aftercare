@@ -1,5 +1,5 @@
 <?php
-$serverName = "triage-server.database.windows.net";
+$serverName = "triage-sever.database.windows.net";
 
 $connectionOptions = [
     "Database" => "triage_db",
