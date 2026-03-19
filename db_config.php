@@ -12,11 +12,21 @@ $connectionOptions = [
 
 $conn = sqlsrv_connect($serverName, $connectionOptions);
 
-if( $conn === false ) {
+if ($conn === false) {
     header('Content-Type: application/json');
+
+    $errors = sqlsrv_errors();
+    $messages = [];
+
+    if ($errors) {
+        foreach ($errors as $err) {
+            $messages[] = $err['message'];
+        }
+    }
+
     die(json_encode([
         "status" => "error",
-        "message" => sqlsrv_errors()
+        "message" => implode(" | ", $messages)
     ]));
 }
 ?>
