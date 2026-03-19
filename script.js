@@ -227,27 +227,38 @@ function sendReportEmail() {
   const end = document.getElementById("endDate").value;
 
   fetch("send_email.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      metrics: dashboardMetrics,
-      dateRange: `${start} to ${end}`
-    })
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    metrics: dashboardMetrics,
+    dateRange: `${start} to ${end}`
   })
-  .then(res => res.json())
-  .then(res => {
-    if (res.success) {
-      showToast("Email sent successfully!", "success");
-    } else {
-      showToast("Failed to send email", "danger");
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    showToast("Error sending email", "danger");
-  });
+})
+.then(async res => {
+  const text = await res.text(); // 👈 RAW RESPONSE
+  console.log("RAW RESPONSE:", text);
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error("Invalid JSON: " + text.substring(0, 200));
+  }
+})
+.then(res => {
+  console.log("PARSED:", res);
+
+  if (res.success) {
+    showToast("Email sent successfully!", "success");
+  } else {
+    showToast(res.error || "Failed to send email", "danger");
+  }
+})
+.catch(err => {
+  console.error("FETCH ERROR:", err);
+  showToast(err.message, "danger");
+});
 }
 
 
