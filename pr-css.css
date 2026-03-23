@@ -154,9 +154,10 @@ body {
 #accountHandlesContainer {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  height: auto; /* Overrides the 200px fixed height */
+  gap: 12px; /* Slightly tighter gap for a cleaner list look */
+  height: auto; 
   padding: 10px 0;
+  width: 100%; /* Ensure it takes full width of the card */
 }
 
 .account-row {
@@ -172,7 +173,32 @@ body {
   font-size: 13px;
   white-space: nowrap;
 }
+/* Add these new rules to your CSS */
+.progress {
+  height: 12px;
+  background-color: #e9ecef; /* The light gray track */
+  border-radius: 10px;
+  width: 100%;
+  overflow: hidden;
+  display: flex; /* Ensures the inner bar fills correctly */
+}
 
+.progress-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.6s ease;
+  /* Background color is handled by your JS 'color' variable */
+}
+#accountHandlesContainer .d-flex {
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* Ensure the name doesn't get squashed */
+#accountHandlesContainer span.fw-bold {
+  min-width: 150px;
+  display: inline-block;
+}
 /* The progress bar wrapper */
 .account-progress-wrapper {
     flex-grow: 1;
