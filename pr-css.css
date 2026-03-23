@@ -126,16 +126,21 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
+  background: #fff;
+  width: 100%;       /* Force card to stay within the column */
+  overflow: hidden;  /* Safety net: clips any internal overflow */
+  box-sizing: border-box;
 }
 
 .bar-container {
   display: flex;
-  align-items: flex-end; 
-  justify-content: center; /* Changed from space-around for better grouping */
-  gap: 15px;               /* Adds consistent spacing between wider bars */
-  height: 200px;           /* Increased height for better visibility */
-  padding-bottom: 5px;
-  border-bottom: 2px solid #f0f0f0;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 200px;
+  padding-bottom: 25px;
+  border-bottom: 2px solid #eee;
+  width: 100%;
+  overflow-x: auto; /* Adds a scrollbar ONLY if the chart is too wide for the screen */
 }
 
 .bar {
