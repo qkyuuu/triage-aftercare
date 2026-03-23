@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json");
 
-// Turn off display_errors so they don't leak into the JSON response
+// 1. Prevent random PHP errors from ruining the JSON output
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
@@ -13,43 +13,50 @@ if (!$input || !isset($input['metrics'])) {
 }
 
 $metrics = $input['metrics'];
-$dateRange = $input['dateRange'] ?? 'Report';
+$dateRange = $input['dateRange'] ?? 'Latest Report';
 
-// Using ?? 0 and ?? [] ensures the script doesn't crash if a value is missing
+// 2. Safely extract values (using ?? 0 prevents "Undefined Index" crashes)
 $total       = $metrics['total'] ?? 0;
 $responded   = $metrics['responded'] ?? 0;
-$closed      = $metrics['nonActionable'] ?? 0; // Check if this should be 'nonActionable' or 'non_actionable'
+$closed      = $metrics['nonActionable'] ?? 0;
 $forResponse = $metrics['forResponse'] ?? 0;
-$journey     = $metrics['journey'] ?? ['Retention'=>0, 'Fans'=>0, 'Usage'=>0, 'Prospecting'=>0];
-$sentiments  = $metrics['sentiments'] ?? ['Positive'=>0, 'Negative'=>0, 'Neutral'=>0];
 
-// Calculate Percentages safely
+// Sub-arrays
+$journey    = $metrics['journey'] ?? [];
+$sentiments = $metrics['sentiments'] ?? [];
+
+// Calculate percentages safely to avoid "Division by zero"
 $respondedPct = $total > 0 ? round(($responded / $total) * 100, 1) : 0;
-$posPct = $total > 0 ? round((($sentiments['Positive'] ?? 0) / $total) * 100) : 0;
-$negPct = $total > 0 ? round((($sentiments['Negative'] ?? 0) / $total) * 100) : 0;
-$neuPct = $total > 0 ? round((($sentiments['Neutral'] ?? 0) / $total) * 100) : 0;
 
-// Platform HTML logic
+// 3. Build Platform List
 $platformHtml = '';
 if (isset($metrics['rawData']) && is_array($metrics['rawData'])) {
-    $platformCounts = [];
-    foreach ($metrics['rawData'] as $row) {
-        $p = $row['Social Network'] ?? 'Other';
-        $platformCounts[$p] = ($platformCounts[$p] ?? 0) + 1;
-    }
-    foreach ($platformCounts as $name => $count) {
-        $platformHtml .= "<div style='margin-bottom:5px;'>$name: <strong>$count</strong></div>";
+    $counts = array_count_values(array_column($metrics['rawData'], 'Social Network'));
+    foreach ($counts as $name => $count) {
+        $platformHtml .= "<div style='margin-bottom:4px;'>$name: <strong>$count</strong></div>";
     }
 }
 
-/* EMAIL BODY TEMPLATE */
-// (Keeping your template as is, it looks great for Outlook/HTML mail)
-$emailBody = '...'; // Your existing $emailBody code here
+// 4. Construct the Email Body (Keep your HTML table structure here)
+$emailBody = "
+<div style='font-family: Arial, sans-serif; color: #333;'>
+    <h2 style='color: #071952;'>Social Triage Report</h2>
+    <p><strong>Date Range:</strong> $dateRange</p>
+    <hr>
+    <table width='100%' style='border-collapse: collapse;'>
+        <tr>
+            <td style='padding: 10px; border: 1px solid #eee;'>Total Sent: <strong>$total</strong></td>
+            <td style='padding: 10px; border: 1px solid #eee;'>Responded: <strong>$responded ($respondedPct%)</strong></td>
+        </tr>
+    </table>
+    <h4 style='color: #071952;'>Platforms</h4>
+    $platformHtml
+</div>";
 
-/* 🔥 Power Automate Config */
+// 5. 🔥 Power Automate API Call
 $flowUrl = "https://default10f787270c1845afb9ee97e94fd5bc.d8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/babe04e0152246ce8b282f17605d9fa5/triggers/manual/paths/invoke?api-version=1";
 
-$data = [
+$payload = [
     "ToEmail" => "v-jopastoral@microsoft.com",
     "SubjectText" => "Social Triage Report: " . $dateRange,
     "BodyText" => $emailBody
@@ -58,22 +65,20 @@ $data = [
 $ch = curl_init($flowUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-
-// IMPORTANT: This allows the request to succeed even if your server has SSL issues
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'Content-Length: ' . strlen(json_encode($payload))
+]);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Crucial for Azure/Local environments
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
 curl_close($ch);
 
-if ($curlError) {
-    echo json_encode(["success" => false, "message" => "CURL Error: " . $curlError]);
-} else {
-    echo json_encode([
-        "success" => $httpCode >= 200 && $httpCode < 300,
-        "http_code" => $httpCode
-    ]);
-}
+// 6. Return response to Dashboard
+echo json_encode([
+    "success" => ($httpCode >= 200 && $httpCode < 300),
+    "status_code" => $httpCode,
+    "debug_msg" => "Power Automate returned code: $httpCode"
+]);
