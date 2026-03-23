@@ -150,7 +150,58 @@ body {
   position: relative;
   background-color: #071952; /* Your primary dark blue */
 }
+/* Specifically target the Accounts container to stack rows vertically */
+#accountHandlesContainer {
+    display: flex;
+    flex-direction: column; /* Stack rows on top of each other */
+    height: auto;           /* Remove the fixed 200px height used for charts */
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: none;    /* Remove the chart floor line */
+    overflow-x: hidden;     /* Remove that horizontal scrollbar */
+}
 
+/* Style for each individual row */
+.account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 13px;
+}
+
+/* The label (e.g., Microsoft Thailand) */
+.account-name {
+    width: 140px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* The progress bar wrapper */
+.account-progress-wrapper {
+    flex-grow: 1;
+    margin: 0 15px;
+    background-color: #f0f0f0;
+    height: 8px;
+    border-radius: 10px;
+    position: relative;
+}
+
+/* The actual colored bar */
+.account-progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    background-color: var(--primary); /* Or use dynamic colors */
+}
+
+/* The percentage and count text */
+.account-stats {
+    width: 80px;
+    text-align: right;
+    color: #666;
+}
 .journey-badge {
   text-align: center;
   border-right: 1px solid #eee;
