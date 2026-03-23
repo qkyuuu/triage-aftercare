@@ -38,20 +38,105 @@ if (isset($metrics['rawData']) && is_array($metrics['rawData'])) {
 }
 
 // 4. Construct the Email Body (Keep your HTML table structure here)
-$emailBody = "
-<div style='font-family: Arial, sans-serif; color: #333;'>
-    <h2 style='color: #071952;'>Social Triage Report</h2>
-    <p><strong>Date Range:</strong> $dateRange</p>
-    <hr>
-    <table width='100%' style='border-collapse: collapse;'>
-        <tr>
-            <td style='padding: 10px; border: 1px solid #eee;'>Total Sent: <strong>$total</strong></td>
-            <td style='padding: 10px; border: 1px solid #eee;'>Responded: <strong>$responded ($respondedPct%)</strong></td>
-        </tr>
-    </table>
-    <h4 style='color: #071952;'>Platforms</h4>
-    $platformHtml
-</div>";
+$emailBody = '
+<html>
+<body style="margin:0; padding:0; background:#f5f6f8; font-family:Arial, sans-serif;">
+
+<table width="100%" bgcolor="#f5f6f8" cellpadding="0" cellspacing="0">
+<tr><td align="center">
+
+<table width="800" bgcolor="#ffffff" cellpadding="20" cellspacing="0" style="border-radius:12px;">
+
+<!-- HEADER -->
+<tr>
+<td style="border-bottom:2px solid #071952;">
+<h2 style="color:#071952; margin:0;">Social Triage After-care Service</h2>
+<p style="color:#666; margin-top:5px;">' . $dateRange . '</p>
+</td>
+</tr>
+
+<!-- TOP METRICS -->
+<tr>
+<td>
+<table width="100%" cellpadding="10" cellspacing="0" style="border:1px solid #ccc; border-radius:10px;">
+<tr>
+<td align="center">
+<div style="font-size:12px;">Total Sent</div>
+<div style="font-size:28px; color:#071952; font-weight:bold;">' . $total . '</div>
+</td>
+
+<td align="center">
+<div style="font-size:12px;">Responded</div>
+<div style="font-size:28px; color:#071952; font-weight:bold;">' . $responded . '</div>
+<div style="font-size:12px; color:#888;">(' . $respondedPct . '%)</div>
+</td>
+
+<td align="center">
+<div style="font-size:12px;">Closed</div>
+<div style="font-size:28px; color:#071952; font-weight:bold;">' . $closed . '</div>
+</td>
+
+<td align="center">
+<div style="font-size:12px;">For Response</div>
+<div style="font-size:28px; color:#071952; font-weight:bold;">' . $forResponse . '</div>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+
+<!-- JOURNEY -->
+<tr>
+<td>
+<table width="100%" cellpadding="10" cellspacing="0" style="border:1px solid #ccc; border-radius:10px;">
+<tr>
+<td align="center"><strong>Retention</strong><br>' . $journey['Retention'] . '</td>
+<td align="center"><strong>Fans</strong><br>' . $journey['Fans'] . '</td>
+<td align="center"><strong>Usage</strong><br>' . $journey['Usage'] . '</td>
+<td align="center"><strong>Prospecting</strong><br>' . $journey['Prospecting'] . '</td>
+</tr>
+</table>
+</td>
+</tr>
+
+<!-- PLATFORM -->
+<tr>
+<td>
+<h4 style="color:#071952;">Social Media Platforms</h4>
+' . $platformHtml . '
+</td>
+</tr>
+
+<!-- SENTIMENT -->
+<tr>
+<td>
+<h4 style="color:#071952;">Message Sentiments</h4>
+
+<div>Positive (' . $sentiments['Positive'] . ')</div>
+<div style="background:#eee; height:8px;">
+<div style="width:' . $posPct . '%; background:#28a745; height:8px;"></div>
+</div>
+
+<div>Negative (' . $sentiments['Negative'] . ')</div>
+<div style="background:#eee; height:8px;">
+<div style="width:' . $negPct . '%; background:#dc3545; height:8px;"></div>
+</div>
+
+<div>Neutral (' . $sentiments['Neutral'] . ')</div>
+<div style="background:#eee; height:8px;">
+<div style="width:' . $neuPct . '%; background:#17a2b8; height:8px;"></div>
+</div>
+
+</td>
+</tr>
+
+</table>
+
+</td></tr>
+</table>
+
+</body>
+</html>';
 
 // 5. 🔥 Power Automate API Call
 $flowUrl = "https://default10f787270c1845afb9ee97e94fd5bc.d8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/babe04e0152246ce8b282f17605d9fa5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=x51ZUJuSWT1NSbpct3opH1wCkPIJDHfin5zX7L-dpfA";
