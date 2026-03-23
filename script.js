@@ -325,7 +325,7 @@ function updateDashboard(data) {
       const color = colors[index] || colors[4];
      // Inside the topAccounts.forEach loop in script.js
 accountContainer.insertAdjacentHTML("beforeend", `
-<div class="d-flex align-items-center mb-3" style="gap: 12px; width: 100%;">
+<div class="d-flex align-items-center" style="gap: 12px; width: 100%;">
   <div style="min-width: 160px; flex-shrink: 0;">
     <span class="fw-bold" style="font-size: 13px;">${name}</span>
   </div>
