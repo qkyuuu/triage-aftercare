@@ -10,26 +10,22 @@ const REQUIRED_HEADERS = [
   "Sentiment",
   "Universal Message ID",
 ];
+
 function validateFormat(data) {
   if (!data || data.length === 0) return false;
   const actualHeaders = Object.keys(data[0]);
-  // Check if every required header exists in the uploaded file
   const missing = REQUIRED_HEADERS.filter((h) => !actualHeaders.includes(h));
 
   if (missing.length > 0) {
-    showToast(
-      `Invalid Format! Missing columns: ${missing.join(", ")}`,
-      "danger",
-    );
+    showToast(`Invalid Format! Missing columns: ${missing.join(", ")}`, "danger");
     return false;
   }
   return true;
 }
 
-let dashboardMetrics = null; // Stores data currently displayed on the dashboard
-let tempUploadData = null; // Stores data from a file upload BEFORE it is saved to DB
+let dashboardMetrics = null;
+let tempUploadData = null;
 
-// 1. DATE PICKER LOGIC (Keep as is)
 document.addEventListener("DOMContentLoaded", function () {
   const dateDisplay = document.getElementById("dynamicDateDisplay");
 
@@ -39,12 +35,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!isNaN(start) && !isNaN(end)) {
       const options = { month: "short", day: "numeric", year: "numeric" };
-
-      // Format both dates fully
       const startText = start.toLocaleDateString("en-US", options);
       const endText = end.toLocaleDateString("en-US", options);
-
-      // Display as: Jan 1, 2026 - Feb 28, 2026
       dateDisplay.innerText = `${startText} - ${endText}`;
     }
   }
@@ -56,185 +48,133 @@ document.addEventListener("DOMContentLoaded", function () {
 
   flatpickr("#startDate", dateConfig);
   flatpickr("#endDate", dateConfig);
-
-  // Run once on load to show initial dates
   updateHeader();
 
-  // Initialize button listeners
   const saveBtn = document.getElementById("dbSaveBtn");
   if (saveBtn) saveBtn.addEventListener("click", saveToDatabase);
 
   const viewBtn = document.getElementById("viewReportBtn");
   if (viewBtn) viewBtn.addEventListener("click", fetchAndDisplayReport);
 
-  // --- 1. DEFINE TOUR (Outside the if-statement) ---
+  // --- NEW: MODAL LISTENERS ---
+  const sendPreviewBtn = document.getElementById("sendPreviewBtn");
+  if (sendPreviewBtn) {
+    sendPreviewBtn.addEventListener("click", function () {
+      if (!dashboardMetrics) {
+        return showToast("Please view a report first!", "warning");
+      }
+      const emailModalEl = document.getElementById('emailModal');
+      const modal = new bootstrap.Modal(emailModalEl);
+      modal.show();
+    });
+  }
+
+  const confirmSendBtn = document.getElementById("confirmSendBtn");
+  if (confirmSendBtn) {
+    confirmSendBtn.addEventListener("click", function () {
+      const emailInput = document.getElementById("destinationEmail");
+      const emailValue = emailInput.value.trim();
+      const errorDiv = document.getElementById("emailError");
+
+      if (!emailValue || !emailValue.includes("@")) {
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      errorDiv.style.display = "none";
+      const modalElement = document.getElementById('emailModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalElement);
+      modalInstance.hide();
+
+      sendDashboardEmail(emailValue);
+    });
+  }
+
   const driver = window.driver.js.driver;
   const tour = driver({
     showProgress: true,
     steps: [
-      {
-        // Only one bracket here
-        element: ".prInfo-div",
-        popover: {
-          title: "📊 Filter Your View",
-          description:
-            'Adjust the <b>Region</b> and <b>Date Range</b> here, then click "View Report" to update the dashboard metrics.',
-          side: "right",
-          align: "center",
-        },
-      },
-      {
-        element: ".sidebar-section",
-        popover: {
-          title: "📥 Data Management",
-          description:
-            "Need to add new records? Use this section to upload your CSV or Excel files directly into the database.",
-          side: "right",
-          align: "center",
-        },
-      },
-      {
-        element: ".report-container",
-        popover: {
-          title: "📋 Interactive Dashboard",
-          description:
-            "This is your real-time preview. All charts, sentiments, and metrics will update instantly based on your filters.",
-          side: "right",
-          align: "center",
-        },
-      },
-      {
-        element: "#sendPreviewBtn",
-        popover: {
-          title: "🚀 Share Your Report",
-          description:
-            "Ready to send? This will capture the dashboard and download the image into your local folder.",
-          side: "left",
-          align: "center",
-        },
-      },
+      { element: ".prInfo-div", popover: { title: "📊 Filter Your View", description: 'Adjust the <b>Region</b> and <b>Date Range</b> here, then click "View Report" to update.', side: "right", align: "center" } },
+      { element: ".sidebar-section", popover: { title: "📥 Data Management", description: "Use this section to upload your CSV or Excel files.", side: "right", align: "center" } },
+      { element: ".report-container", popover: { title: "📋 Interactive Dashboard", description: "This is your real-time preview. All charts update instantly.", side: "right", align: "center" } },
+      { element: "#sendPreviewBtn", popover: { title: "🚀 Share Your Report", description: "Capture the dashboard and send it via email.", side: "left", align: "center" } },
     ],
   });
 
-  // --- 2. ADD BUTTON LISTENER ---
   const startTourBtn = document.getElementById("startTourBtn");
   if (startTourBtn) {
-    startTourBtn.addEventListener("click", () => {
-      tour.drive();
-    });
+    startTourBtn.addEventListener("click", () => { tour.drive(); });
   }
 
-  // --- 3. AUTO-START LOGIC ---
   if (!localStorage.getItem("dashboard_tour_seen")) {
     tour.drive();
     localStorage.setItem("dashboard_tour_seen", "true");
   }
 });
 
-/**
- * HELPER: Formats various date inputs into MySQL YYYY-MM-DD format
- * Handles Excel serial numbers and "MM-DD-YYYY HH:MM" strings
- */
 function formatInboundDate(input) {
   if (!input) return null;
-
-  // Handle Excel Serial Numbers
   if (typeof input === "number") {
     const date = new Date(Math.round((input - 25569) * 86400 * 1000));
     return date.toISOString().split("T")[0];
   }
-
-  // Handle String format: "2/28/2026 7:59" or "02-24-2026"
   if (typeof input === "string") {
     const datePart = input.split(" ")[0];
-    // Replace slashes with dashes to standardize
     const standardizedDate = datePart.replace(/\//g, "-");
     const parts = standardizedDate.split("-");
-
     if (parts.length === 3) {
-      // Logic to handle both M-D-Y and Y-M-D
       let [p1, p2, p3] = parts;
-      if (p1.length === 4)
-        return `${p1}-${p2.padStart(2, "0")}-${p3.padStart(2, "0")}`; // YYYY-MM-DD
-      return `${p3}-${p1.padStart(2, "0")}-${p2.padStart(2, "0")}`; // MM-DD-YYYY to YYYY-MM-DD
+      if (p1.length === 4) return `${p1}-${p2.padStart(2, "0")}-${p3.padStart(2, "0")}`;
+      return `${p3}-${p1.padStart(2, "0")}-${p2.padStart(2, "0")}`;
     }
   }
   return input;
 }
 
-// --- 2. FULL FILE UPLOAD LISTENER ---
 document.getElementById("csvUpload").addEventListener("change", function (e) {
   const file = e.target.files[0];
   if (!file) return;
-  
   const fileName = file.name.toLowerCase();
   const statusDiv = document.getElementById("uploadStatus");
 
-  // Define the handler inside to ensure it has access to the scope
   const handleFileProcess = (data) => {
-    console.log("Processing data:", data); // Debugging line
-
-    // A. Verify if the user uses the same format
     if (!validateFormat(data)) {
-      tempUploadData = null; 
-      this.value = ""; 
+      tempUploadData = null;
+      this.value = "";
       return;
     }
-
-    // B. CLEAN DATA
     const cleanedData = data.map((row) => {
       if (row["Inbound Message Date"]) {
         row["Inbound Message Date"] = formatInboundDate(row["Inbound Message Date"]);
       }
       return row;
     });
-
-    // CRITICAL FIX: Assign to the global variable
     tempUploadData = cleanedData;
-
     statusDiv.style.display = "block";
     statusDiv.className = "mt-2 small fw-bold text-success text-center";
     statusDiv.innerHTML = `✔ Format Verified (${cleanedData.length} rows). Click 'Save to Database'.`;
   };
-  // Inside your document.getElementById("csvUpload") listener...
 
-if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: "array" });
-            
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
-            handleFileProcess(jsonData);
-        } catch (error) {
-            console.error("SheetJS Error:", error);
-            if (error.message.includes("Encrypted")) {
-                showToast("This file is password protected. Please remove the password and try again.", "danger");
-            } else {
-                showToast("Failed to read Excel file. It might be corrupted.", "danger");
-            }
-            // Clear the input so the user can try a different file
-            document.getElementById("csvUpload").value = "";
-        }
-    };
-    reader.readAsArrayBuffer(file);
-}
-  // Process Excel Files
   if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
     const reader = new FileReader();
     reader.onload = function (e) {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
-      handleFileProcess(jsonData);
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
+        handleFileProcess(jsonData);
+      } catch (error) {
+        if (error.message.includes("Encrypted")) {
+          showToast("This file is password protected.", "danger");
+        } else {
+          showToast("Failed to read Excel file.", "danger");
+        }
+        document.getElementById("csvUpload").value = "";
+      }
     };
     reader.readAsArrayBuffer(file);
-  } 
-  // Process CSV Files
-  else if (fileName.endsWith(".csv")) {
+  } else if (fileName.endsWith(".csv")) {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -248,62 +188,18 @@ if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
       },
     });
   } else {
-    showToast("Unsupported file format. Please upload CSV or Excel.", "danger");
+    showToast("Unsupported file format.", "danger");
   }
 });
 
-//SENDING OF EMAIL
-function sendReportEmail() {
-  const start = document.getElementById("startDate").value;
-  const end = document.getElementById("endDate").value;
-
-  fetch("send_email.php", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    metrics: dashboardMetrics,
-    dateRange: `${start} to ${end}`
-  })
-})
-.then(async res => {
-  const text = await res.text(); // 👈 RAW RESPONSE
-  console.log("RAW RESPONSE:", text);
-
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new Error("Invalid JSON: " + text.substring(0, 200));
-  }
-})
-.then(res => {
-  console.log("PARSED:", res);
-
-  if (res.success) {
-    showToast("Email sent successfully!", "success");
-  } else {
-    showToast(res.error || "Failed to send email", "danger");
-  }
-})
-.catch(err => {
-  console.error("FETCH ERROR:", err);
-  showToast(err.message, "danger");
-});
-}
-
-
-// 3. SAVE TO DATABASE LOGIC
 async function saveToDatabase() {
   const statusDiv = document.getElementById("uploadStatus");
   const uploadRegion = document.getElementById("uploadRegion").value;
   const date = document.getElementById("startDate").value;
   const fileInput = document.getElementById("csvUpload");
 
-  if (!tempUploadData)
-    return showToast("Please upload and process a file first!", "danger");
-  if (uploadRegion === "Select Region...")
-    return showToast("Please select a region", "warning");
+  if (!tempUploadData) return showToast("Please upload and process a file first!", "danger");
+  if (uploadRegion === "Select Region...") return showToast("Please select a region", "warning");
 
   statusDiv.style.display = "block";
   statusDiv.className = "mt-2 small fw-bold text-primary text-center";
@@ -320,110 +216,72 @@ async function saveToDatabase() {
       }),
     });
 
-    // 1. Get the raw text first to check if it's actually JSON
     const text = await response.text();
-    
-    let result;
-    try {
-        result = JSON.parse(text);
-    } catch (e) {
-        // If it's NOT JSON, show the raw text (this is where the 'Array' lives!)
-        throw new Error("Server sent back non-JSON: " + text.substring(0, 100));
-    }
+    let result = JSON.parse(text);
 
     if (result.status === "success") {
       statusDiv.className = "mt-2 small fw-bold text-success text-center";
       statusDiv.innerHTML = `✔ ${result.message}`;
       showToast(result.message, "success");
-
       tempUploadData = null;
       if (fileInput) fileInput.value = "";
     } else {
-      // Handle errors sent by PHP
-      const errorMsg = result.message || result.error || "Unknown Error";
+      const errorMsg = result.message || "Unknown Error";
       statusDiv.className = "mt-2 small fw-bold text-danger text-center";
       statusDiv.innerHTML = `❌ ${errorMsg}`;
       showToast(errorMsg, "danger");
     }
-
   } catch (error) {
-    console.error("Save Error:", error);
-    statusDiv.className = "mt-2 small fw-bold text-danger text-center";
     statusDiv.innerHTML = `❌ ${error.message}`;
   }
 }
 
-// 4. VIEW REPORT LOGIC
 async function fetchAndDisplayReport() {
   const region = document.getElementById("viewRegion").value;
   const start = document.getElementById("startDate").value;
   const end = document.getElementById("endDate").value;
 
-  if (region === "Select Region...")
-    return showToast("Please select a region to view!", "warning");
+  if (region === "Select Region...") return showToast("Please select a region to view!", "warning");
 
   try {
-    const response = await fetch(
-      `fetch_report.php?region=${region}&start=${start}&end=${end}`,
-    );
+    const response = await fetch(`fetch_report.php?region=${region}&start=${start}&end=${end}`);
     const data = await response.json();
-
     if (!data || data.length === 0) {
       showToast("No data found for the selected filters.", "warning");
     } else {
       updateDashboard(data);
     }
   } catch (e) {
-    console.error("Fetch Error:", e);
-    showToast(
-      "Error fetching data from database. Please contact developer support!",
-      "danger",
-    );
+    showToast("Error fetching data from database.", "danger");
   }
 }
 
-// 5. UPDATE DASHBOARD
 function updateDashboard(data) {
   const cleanData = data.filter((row) => row["Inbound Count (SUM)"] != null);
   const total = cleanData.length;
-
   if (total === 0) return;
 
-  // --- 1. Top Cards (Routing Stages) ---
-  const responded = cleanData.filter(
-    (row) => row["Routing Stage (in) (Message)"] === "Responded To",
-  ).length;
-  const nonActionable = cleanData.filter(
-    (row) => row["Routing Stage (in) (Message)"] === "Non-Actionable",
-  ).length;
-  const forResponse = cleanData.filter((row) =>
-    ["New", "For Response"].includes(row["Routing Stage (in) (Message)"]),
-  ).length;
+  const responded = cleanData.filter((row) => row["Routing Stage (in) (Message)"] === "Responded To").length;
+  const nonActionable = cleanData.filter((row) => row["Routing Stage (in) (Message)"] === "Non-Actionable").length;
+  const forResponse = cleanData.filter((row) => ["New", "For Response"].includes(row["Routing Stage (in) (Message)"])).length;
 
   document.getElementById("totalSent").innerText = total;
   document.getElementById("totalResponded").innerText = responded;
-  document.getElementById("totalRespondedPct").innerText =
-    `(${((responded / total) * 100).toFixed(1)}%)`;
+  document.getElementById("totalRespondedPct").innerText = `(${((responded / total) * 100).toFixed(1)}%)`;
   document.getElementById("totalClosed").innerText = nonActionable;
-  document.getElementById("totalClosedPct").innerText =
-    `(${((nonActionable / total) * 100).toFixed(1)}%)`;
+  document.getElementById("totalClosedPct").innerText = `(${((nonActionable / total) * 100).toFixed(1)}%)`;
   document.getElementById("forResponse").innerText = forResponse;
-  document.getElementById("forResponsePct").innerText =
-    `(${((forResponse / total) * 100).toFixed(1)}%)`;
+  document.getElementById("forResponsePct").innerText = `(${((forResponse / total) * 100).toFixed(1)}%)`;
 
-  // Helper Function for Top 4 + Others Logic
   const getTop4AndOthers = (countsObj) => {
     const entries = Object.entries(countsObj).sort((a, b) => b[1] - a[1]);
     if (entries.length <= 4) return entries;
     const top4 = entries.slice(0, 4);
-    const othersCount = entries
-      .slice(4)
-      .reduce((sum, entry) => sum + entry[1], 0);
+    const othersCount = entries.slice(4).reduce((sum, entry) => sum + entry[1], 0);
     top4.push(["Others", othersCount]);
     return top4;
   };
 
-  // --- 2. Performance by Area (Country) - VERTICAL BARS ---
   const areaCounts = {};
   cleanData.forEach((row) => {
     const area = row["Country (in) (Message)"] || "Unknown";
@@ -438,29 +296,19 @@ function updateDashboard(data) {
     const maxAreaCount = Math.max(...topAreas.map((e) => e[1]));
     const colors = ["#071952", "#088395", "#37B7C3", "#64B5F6", "#757575"];
 
-    // FIXED: Added 'index' here so the color logic works
     topAreas.forEach(([area, count], index) => {
       const displayHeight = maxAreaCount > 0 ? (count / maxAreaCount) * 95 : 0;
-
-      // Now 'index' is defined, so this line won't crash the script
       const color = colors[index] || colors[4];
-
-      areaContainer.insertAdjacentHTML(
-        "beforeend",
-        `
+      areaContainer.insertAdjacentHTML("beforeend", `
         <div class="bar-wrapper">
           <div class="bar" style="height: ${displayHeight}%; background: ${color};" title="${area}: ${count}">
-            <span style="font-size: 15px; position: absolute; text-align:center; width: 100%; top: 2.5px; color: #FFFFFF; font-weight: bold;">
-              ${count}
-            </span>
+            <span style="font-size: 15px; position: absolute; text-align:center; width: 100%; top: 2.5px; color: #FFFFFF; font-weight: bold;">${count}</span>
           </div>
           <div class="small mt-1" style="font-size: 11px; font-weight: bold; white-space: nowrap;">${area}</div>
-        </div>`,
-      );
+        </div>`);
     });
   }
 
-  // --- 3. Performance by Accounts/Handles - HORIZONTAL BARS ---
   const accountCounts = {};
   cleanData.forEach((row) => {
     const acc = row["Account"] || "Unknown";
@@ -470,50 +318,27 @@ function updateDashboard(data) {
   const accountContainer = document.getElementById("accountHandlesContainer");
   if (accountContainer) {
     accountContainer.innerHTML = "";
-    accountContainer.className = "mt-3";
-
     const topAccounts = getTop4AndOthers(accountCounts);
-
-    // Define the same color palette
     const colors = ["#071952", "#088395", "#37B7C3", "#64B5F6", "#757575"];
-
-    // Added 'index' here to track the loop count
     topAccounts.forEach(([name, count], index) => {
       const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-
-      // Select color based on index
       const color = colors[index] || colors[4];
-
-      accountContainer.insertAdjacentHTML(
-        "beforeend",
-        `
+      accountContainer.insertAdjacentHTML("beforeend", `
       <div class="d-flex align-items-center mb-2" style="gap: 12px;">
         <div style="min-width: 200px; display: flex; justify-content: space-between; align-items: center;">
-          <span class="fw-bold" style="font-size: 14px; white-space: nowrap; overflow: hidden; max-width: 150px;" title="${name}">
-            ${name}
-          </span>
-          <span class="text-muted" style="font-size: 12px; margin-left: 5px;">
-            ${pct}%
-          </span>
+          <span class="fw-bold" style="font-size: 14px; white-space: nowrap; overflow: hidden; max-width: 150px;">${name}</span>
+          <span class="text-muted" style="font-size: 12px;">${pct}%</span>
         </div>
-
         <div class="flex-grow-1">
           <div class="progress" style="height: 12px; background-color: #e9ecef; border-radius: 10px;">
-            <div class="progress-bar" role="progressbar" 
-                 style="width: ${pct}%; background-color: ${color}; border-radius: 10px;">
-            </div>
+            <div class="progress-bar" style="width: ${pct}%; background-color: ${color}; border-radius: 10px;"></div>
           </div>
         </div>
-        
-        <div style="min-width: 25px; text-align: right; font-size: 12px; color: #888;">
-          ${count}
-        </div>
-      </div>`,
-      );
+        <div style="min-width: 25px; text-align: right; font-size: 12px; color: #888;">${count}</div>
+      </div>`);
     });
   }
 
-  // --- 4. Customer Journey & Platform ---
   const journey = calculateJourney(cleanData);
   document.getElementById("count-retention").innerText = journey.Retention;
   document.getElementById("count-fans").innerText = journey.Fans;
@@ -529,34 +354,21 @@ function updateDashboard(data) {
   const platformList = document.getElementById("platformList");
   platformList.innerHTML = "";
   Object.entries(platformCounts).forEach(([name, count]) => {
-    platformList.innerHTML += `
-      <div class="d-flex justify-content-between small border-bottom mb-1">
-        <span>${name}</span><b>${count}</b>
-      </div>`;
+    platformList.innerHTML += `<div class="d-flex justify-content-between small border-bottom mb-1"><span>${name}</span><b>${count}</b></div>`;
   });
 
-  // --- 5. Sentiments ---
   const sentiments = calculateSentiments(cleanData);
   const updateBar = (id, count) => {
     const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-    document.getElementById(`label-${id}`).innerText =
-      `${id.charAt(0).toUpperCase() + id.slice(1)} (${count})`;
+    document.getElementById(`label-${id}`).innerText = `${id.charAt(0).toUpperCase() + id.slice(1)} (${count})`;
     document.getElementById(`bar-${id}`).style.width = pct + "%";
   };
   updateBar("positive", sentiments.Positive);
   updateBar("negative", sentiments.Negative);
   updateBar("neutral", sentiments.Neutral);
 
-  dashboardMetrics = {
-    total,
-    responded,
-    nonActionable,
-    forResponse,
-    journey,
-    sentiments,
-    rawData: cleanData,
-  };
-  // --- 6. Message Type (PIE CHART - Column I) ---
+  dashboardMetrics = { total, responded, nonActionable, forResponse, journey, sentiments, rawData: cleanData };
+
   const typeCounts = {};
   cleanData.forEach((row) => {
     const mType = row["Message Type"] || "Unknown";
@@ -569,7 +381,6 @@ function updateDashboard(data) {
   if (messageTypeContainer && typeLegend) {
     const topTypes = getTop4AndOthers(typeCounts);
     const colors = ["#071952", "#088395", "#37B7C3", "#64B5F6", "#757575"];
-
     typeLegend.innerHTML = "";
     let svgPaths = "";
     let cumulativePercent = 0;
@@ -577,36 +388,16 @@ function updateDashboard(data) {
     topTypes.forEach(([name, count], index) => {
       const percent = count / total;
       const color = colors[index] || colors[4];
-
-      // Calculate SVG coordinates for the slice
       const startX = Math.cos(2 * Math.PI * cumulativePercent);
       const startY = Math.sin(2 * Math.PI * cumulativePercent);
       cumulativePercent += percent;
       const endX = Math.cos(2 * Math.PI * cumulativePercent);
       const endY = Math.sin(2 * Math.PI * cumulativePercent);
-
       const largeArcFlag = percent > 0.5 ? 1 : 0;
-
-      // Create the path string
       svgPaths += `<path d="M 0 0 L ${startX} ${startY} A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY} Z" fill="${color}"></path>`;
-
-      // Add to Legend
-      typeLegend.innerHTML += `
-        <div class="d-flex align-items-center mb-1 small">
-          <div style="width: 12px; height: 12px; background: ${color}; border-radius: 3px; margin-right: 8px;"></div>
-          <span class="text-truncate" style="max-width: 120px;">${name}</span>
-          <span class="ms-auto fw-bold">${count}</span>
-        </div>`;
+      typeLegend.innerHTML += `<div class="d-flex align-items-center mb-1 small"><div style="width: 12px; height: 12px; background: ${color}; border-radius: 3px; margin-right: 8px;"></div><span>${name}</span><span class="ms-auto fw-bold">${count}</span></div>`;
     });
-
-    // Inject SVG instead of setting background gradient
-    messageTypeContainer.innerHTML = `
-      <svg viewBox="-1 -1 2 2" style="transform: rotate(-90deg); width: 100%; height: 100%; display: block;">
-        ${svgPaths}
-        <circle cx="0" cy="0" r="0.5" fill="white" /> </svg>`;
-
-    // Clear any old gradient backgrounds
-    messageTypeContainer.style.background = "none";
+    messageTypeContainer.innerHTML = `<svg viewBox="-1 -1 2 2" style="transform: rotate(-90deg); width: 100%; height: 100%; display: block;">${svgPaths}<circle cx="0" cy="0" r="0.5" fill="white" /></svg>`;
   }
 }
 
@@ -631,15 +422,48 @@ function calculateSentiments(data) {
   return s;
 }
 
-document
-  .getElementById("sendPreviewBtn")
-  .addEventListener("click", function () {
-    if (!dashboardMetrics) {
-      return showToast("Please view a report first!", "warning");
-    }
-    sendDashboardEmail();
+function sendDashboardEmail(targetEmail) {
+  const element = document.querySelector(".report-container");
+  if (!element) return showToast("Report area not found!", "danger");
+
+  showToast("Capturing report... Please wait.", "info");
+
+  html2canvas(element, {
+    scale: 1,
+    useCORS: true,
+    backgroundColor: "#f5f6f8",
+    logging: false
+  }).then(canvas => {
+    const base64Image = canvas.toDataURL("image/jpeg", 0.6);
+    const dateText = document.getElementById("dynamicDateDisplay")?.innerText || "Latest Report";
+
+    fetch("send_email.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({
+        image: base64Image,
+        dateRange: dateText,
+        recipient: targetEmail
+      })
+    })
+    .then(async response => {
+      const rawText = await response.text();
+      return JSON.parse(rawText);
+    })
+    .then(data => {
+      if (data.success) {
+        showToast(`Email sent successfully to ${targetEmail}!`, "success");
+        document.getElementById("destinationEmail").value = "";
+      } else {
+        showToast("Server Error: " + data.message, "danger");
+      }
+    })
+    .catch(err => {
+      showToast("Connection failed.", "danger");
+    });
   });
-//upload section toggle
+}
+
 const toggleBtn = document.getElementById("toggleUploadBtn");
 const collapseContent = document.getElementById("uploadCollapseContent");
 const toggleIcon = document.getElementById("toggleIcon");
@@ -647,137 +471,18 @@ const toggleIcon = document.getElementById("toggleIcon");
 if (toggleBtn) {
   toggleBtn.addEventListener("click", function () {
     const isHidden = collapseContent.style.display === "none";
-
-    if (isHidden) {
-      collapseContent.style.display = "block";
-      toggleIcon.classList.add("rotate-icon");
-    } else {
-      collapseContent.style.display = "none";
-      toggleIcon.classList.remove("rotate-icon");
-    }
+    collapseContent.style.display = isHidden ? "block" : "none";
+    if (isHidden) toggleIcon.classList.add("rotate-icon");
+    else toggleIcon.classList.remove("rotate-icon");
   });
 }
 
-//Alert messages
-/**
- * Modern Alert Replacement
- * @param {string} message - The text to show
- * @param {string} type - 'success', 'danger', 'warning', or 'info'
- */
 function showToast(message, type = "info") {
   const toastEl = document.getElementById("liveToast");
   const toastMessage = document.getElementById("toastMessage");
-
-  // Set color based on type
-  toastEl.classList.remove(
-    "bg-dark",
-    "bg-success",
-    "bg-danger",
-    "bg-warning",
-    "bg-info",
-  );
+  toastEl.classList.remove("bg-dark", "bg-success", "bg-danger", "bg-warning", "bg-info");
   toastEl.classList.add(`bg-${type}`);
-
   toastMessage.innerText = message;
-
   const toast = new bootstrap.Toast(toastEl);
   toast.show();
 }
-
-function sendDashboardEmail() {
-    const element = document.querySelector(".report-container");
-    if (!element) return alert("Report area not found!");
-
-    // Adding a "Processing" state helps user experience
-    console.log("Starting capture...");
-
-    html2canvas(element, {
-        scale: 1, // Start with 1 to test size issues; increase to 2 later if it works
-        useCORS: true,
-        backgroundColor: "#f5f6f8",
-        logging: false // Keeps console clean
-    }).then(canvas => {
-        const base64Image = canvas.toDataURL("image/jpeg", 0.6); // Lower quality slightly to ensure it passes through
-        
-        if (base64Image.length < 100) {
-            return alert("Image capture failed - data too small.");
-        }
-
-        const dateText = document.getElementById("dynamicDateDisplay")?.innerText || "Latest Report";
-
-        fetch("send_email.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({
-                image: base64Image,
-                dateRange: dateText
-            })
-        })
-        .then(async response => {
-            const rawText = await response.text();
-            console.log("RAW SERVER RESPONSE:", rawText); // THIS is the gold mine for debugging
-            return JSON.parse(rawText);
-        })
-        .then(data => {
-            if (data.success) {
-                showToast("Email sent successfully!", "success");
-            } else {
-                showToast("Server Error: " + data.message, "danger");
-            }
-        })
-        .catch(err => {
-            console.error("Fetch Error:", err);
-            showToast("Connection failed.", "danger");
-        });
-    });
-}
-/**
- * Precise Dashboard Capture
- * Targets only the report area, ignoring sidebar and topbar
- */
-// function captureDashboard() {
-//   // Target the specific container for the report
-//   const element = document.querySelector(".report-container");
-
-//   if (!element) {
-//     return showToast("Dashboard area not found.", "danger");
-//   }
-
-//   if (typeof showToast === "function") {
-//     showToast("Generating report image...", "info");
-//   }
-
-//   const options = {
-//     scale: 2, // High resolution
-//     useCORS: true, // For external assets
-//     backgroundColor: "#f5f6f8", // Matches your dashboard bg
-//     // These settings prevent the sidebar/topbar overlap issues
-//     scrollX: 0,
-//     scrollY: -window.scrollY,
-//     windowWidth: document.documentElement.offsetWidth,
-//     windowHeight: document.documentElement.offsetHeight,
-//   };
-
-//   html2canvas(element, options)
-//     .then((canvas) => {
-//       const image = canvas.toDataURL("image/jpeg", 0.9);
-//       const link = document.createElement("a");
-
-//       const dateStr = new Date().toISOString().slice(0, 10);
-//       link.download = `Triage_Report_${dateStr}.jpg`;
-//       link.href = image;
-//       link.click();
-
-//       if (typeof showToast === "function") {
-//         showToast("Report image downloaded!", "success");
-//       }
-//     })
-//     .catch((err) => {
-//       console.error("Capture Error:", err);
-//       showToast("Capture failed. Try scrolling to the top.", "danger");
-//     });
-// }
-
