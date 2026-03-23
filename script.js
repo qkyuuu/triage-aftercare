@@ -434,7 +434,7 @@ function sendDashboardEmail(targetEmail) {
   html2canvas(element, {
     scale: 1,
     useCORS: true,
-    backgroundColor: "#f5f6f8",
+    backgroundColor: "#ffffff",
     logging: false
   }).then(canvas => {
     const base64Image = canvas.toDataURL("image/jpeg", 0.6);
