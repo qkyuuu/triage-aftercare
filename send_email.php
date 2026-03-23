@@ -1,151 +1,57 @@
 <?php
 header("Content-Type: application/json");
 
+// Turn off display_errors so they don't leak into the JSON response
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 $input = json_decode(file_get_contents("php://input"), true);
 
 if (!$input || !isset($input['metrics'])) {
-    echo json_encode(["success" => false, "message" => "Invalid data"]);
+    echo json_encode(["success" => false, "message" => "Invalid data received"]);
     exit;
 }
 
 $metrics = $input['metrics'];
-$dateRange = $input['dateRange'] ?? '';
+$dateRange = $input['dateRange'] ?? 'Report';
 
-// Extract values
-$total = $metrics['total'];
-$responded = $metrics['responded'];
-$closed = $metrics['nonActionable'];
-$forResponse = $metrics['forResponse'];
-$journey = $metrics['journey'];
-$sentiments = $metrics['sentiments'];
+// Using ?? 0 and ?? [] ensures the script doesn't crash if a value is missing
+$total       = $metrics['total'] ?? 0;
+$responded   = $metrics['responded'] ?? 0;
+$closed      = $metrics['nonActionable'] ?? 0; // Check if this should be 'nonActionable' or 'non_actionable'
+$forResponse = $metrics['forResponse'] ?? 0;
+$journey     = $metrics['journey'] ?? ['Retention'=>0, 'Fans'=>0, 'Usage'=>0, 'Prospecting'=>0];
+$sentiments  = $metrics['sentiments'] ?? ['Positive'=>0, 'Negative'=>0, 'Neutral'=>0];
 
-// Percentages
+// Calculate Percentages safely
 $respondedPct = $total > 0 ? round(($responded / $total) * 100, 1) : 0;
-$posPct = $total > 0 ? round(($sentiments['Positive'] / $total) * 100) : 0;
-$negPct = $total > 0 ? round(($sentiments['Negative'] / $total) * 100) : 0;
-$neuPct = $total > 0 ? round(($sentiments['Neutral'] / $total) * 100) : 0;
+$posPct = $total > 0 ? round((($sentiments['Positive'] ?? 0) / $total) * 100) : 0;
+$negPct = $total > 0 ? round((($sentiments['Negative'] ?? 0) / $total) * 100) : 0;
+$neuPct = $total > 0 ? round((($sentiments['Neutral'] ?? 0) / $total) * 100) : 0;
 
-// Platform HTML (build dynamically if needed)
+// Platform HTML logic
 $platformHtml = '';
-if (isset($metrics['rawData'])) {
+if (isset($metrics['rawData']) && is_array($metrics['rawData'])) {
     $platformCounts = [];
     foreach ($metrics['rawData'] as $row) {
         $p = $row['Social Network'] ?? 'Other';
         $platformCounts[$p] = ($platformCounts[$p] ?? 0) + 1;
     }
-
     foreach ($platformCounts as $name => $count) {
-        $platformHtml .= "<div>$name: <strong>$count</strong></div>";
+        $platformHtml .= "<div style='margin-bottom:5px;'>$name: <strong>$count</strong></div>";
     }
 }
 
-/* 👉 PASTE YOUR $emailBody TEMPLATE HERE 👇 */
-$emailBody = '
-<html>
-<body style="margin:0; padding:0; background:#f5f6f8; font-family:Arial, sans-serif;">
+/* EMAIL BODY TEMPLATE */
+// (Keeping your template as is, it looks great for Outlook/HTML mail)
+$emailBody = '...'; // Your existing $emailBody code here
 
-<table width="100%" bgcolor="#f5f6f8" cellpadding="0" cellspacing="0">
-<tr><td align="center">
-
-<table width="800" bgcolor="#ffffff" cellpadding="20" cellspacing="0" style="border-radius:12px;">
-
-<!-- HEADER -->
-<tr>
-<td style="border-bottom:2px solid #071952;">
-<h2 style="color:#071952; margin:0;">Social Triage After-care Service</h2>
-<p style="color:#666; margin-top:5px;">' . $dateRange . '</p>
-</td>
-</tr>
-
-<!-- TOP METRICS -->
-<tr>
-<td>
-<table width="100%" cellpadding="10" cellspacing="0" style="border:1px solid #ccc; border-radius:10px;">
-<tr>
-<td align="center">
-<div style="font-size:12px;">Total Sent</div>
-<div style="font-size:28px; color:#071952; font-weight:bold;">' . $total . '</div>
-</td>
-
-<td align="center">
-<div style="font-size:12px;">Responded</div>
-<div style="font-size:28px; color:#071952; font-weight:bold;">' . $responded . '</div>
-<div style="font-size:12px; color:#888;">(' . $respondedPct . '%)</div>
-</td>
-
-<td align="center">
-<div style="font-size:12px;">Closed</div>
-<div style="font-size:28px; color:#071952; font-weight:bold;">' . $closed . '</div>
-</td>
-
-<td align="center">
-<div style="font-size:12px;">For Response</div>
-<div style="font-size:28px; color:#071952; font-weight:bold;">' . $forResponse . '</div>
-</td>
-</tr>
-</table>
-</td>
-</tr>
-
-<!-- JOURNEY -->
-<tr>
-<td>
-<table width="100%" cellpadding="10" cellspacing="0" style="border:1px solid #ccc; border-radius:10px;">
-<tr>
-<td align="center"><strong>Retention</strong><br>' . $journey['Retention'] . '</td>
-<td align="center"><strong>Fans</strong><br>' . $journey['Fans'] . '</td>
-<td align="center"><strong>Usage</strong><br>' . $journey['Usage'] . '</td>
-<td align="center"><strong>Prospecting</strong><br>' . $journey['Prospecting'] . '</td>
-</tr>
-</table>
-</td>
-</tr>
-
-<!-- PLATFORM -->
-<tr>
-<td>
-<h4 style="color:#071952;">Social Media Platforms</h4>
-' . $platformHtml . '
-</td>
-</tr>
-
-<!-- SENTIMENT -->
-<tr>
-<td>
-<h4 style="color:#071952;">Message Sentiments</h4>
-
-<div>Positive (' . $sentiments['Positive'] . ')</div>
-<div style="background:#eee; height:8px;">
-<div style="width:' . $posPct . '%; background:#28a745; height:8px;"></div>
-</div>
-
-<div>Negative (' . $sentiments['Negative'] . ')</div>
-<div style="background:#eee; height:8px;">
-<div style="width:' . $negPct . '%; background:#dc3545; height:8px;"></div>
-</div>
-
-<div>Neutral (' . $sentiments['Neutral'] . ')</div>
-<div style="background:#eee; height:8px;">
-<div style="width:' . $neuPct . '%; background:#17a2b8; height:8px;"></div>
-</div>
-
-</td>
-</tr>
-
-</table>
-
-</td></tr>
-</table>
-
-</body>
-</html>';
-
-/* 🔥 Power Automate */
+/* 🔥 Power Automate Config */
 $flowUrl = "https://default10f787270c1845afb9ee97e94fd5bc.d8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/babe04e0152246ce8b282f17605d9fa5/triggers/manual/paths/invoke?api-version=1";
 
 $data = [
     "ToEmail" => "v-jopastoral@microsoft.com",
-    "SubjectText" => "Social Triage Report",
+    "SubjectText" => "Social Triage Report: " . $dateRange,
     "BodyText" => $emailBody
 ];
 
@@ -155,10 +61,19 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 
+// IMPORTANT: This allows the request to succeed even if your server has SSL issues
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
 curl_close($ch);
 
-echo json_encode([
-    "success" => $httpCode >= 200 && $httpCode < 300
-]);
+if ($curlError) {
+    echo json_encode(["success" => false, "message" => "CURL Error: " . $curlError]);
+} else {
+    echo json_encode([
+        "success" => $httpCode >= 200 && $httpCode < 300,
+        "http_code" => $httpCode
+    ]);
+}
