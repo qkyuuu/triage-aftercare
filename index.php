@@ -297,6 +297,25 @@
     </div>
   </div>
 </div>
+	  <div class="modal fade" id="emailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">🚀 Send Report</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label for="destinationEmail" class="form-label">Recipient Email Address</label>
+        <input type="email" class="form-control" id="destinationEmail" placeholder="name@example.com" required>
+        <div id="emailError" class="text-danger small mt-1" style="display:none;">Please enter a valid email.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmSendBtn">Send Now</button>
+      </div>
+    </div>
+  </div>
+</div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
