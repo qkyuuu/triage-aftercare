@@ -685,49 +685,52 @@ function showToast(message, type = "info") {
 }
 
 function sendDashboardEmail() {
-    // 1. Target the .page-area or .report-container
     const element = document.querySelector(".report-container");
+    if (!element) return alert("Report area not found!");
 
-    if (!element) {
-        alert("Report area not found!");
-        return;
-    }
+    // Adding a "Processing" state helps user experience
+    console.log("Starting capture...");
 
-    // 2. Capture the element as a canvas
     html2canvas(element, {
-        scale: 2, // Keeps it sharp
+        scale: 1, // Start with 1 to test size issues; increase to 2 later if it works
         useCORS: true,
-        backgroundColor: "#f5f6f8"
+        backgroundColor: "#f5f6f8",
+        logging: false // Keeps console clean
     }).then(canvas => {
-        // 3. Convert to Base64 Image string
-        const base64Image = canvas.toDataURL("image/jpeg", 0.7); // 0.7 reduces file size for faster sending
+        const base64Image = canvas.toDataURL("image/jpeg", 0.6); // Lower quality slightly to ensure it passes through
+        
+        if (base64Image.length < 100) {
+            return alert("Image capture failed - data too small.");
+        }
 
-        // 4. Get the date from your dashboard
         const dateText = document.getElementById("dynamicDateDisplay")?.innerText || "Latest Report";
 
-        // 5. POST to your PHP
         fetch("send_email.php", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
             body: JSON.stringify({
-                image: base64Image, // THIS MUST MATCH PHP $input['image']
+                image: base64Image,
                 dateRange: dateText
             })
         })
-        .then(response => response.json())
+        .then(async response => {
+            const rawText = await response.text();
+            console.log("RAW SERVER RESPONSE:", rawText); // THIS is the gold mine for debugging
+            return JSON.parse(rawText);
+        })
         .then(data => {
-            console.log("PARSED:", data);
             if (data.success) {
-                alert("Email sent successfully!");
+                showToast("Email sent successfully!", "success");
             } else {
-                alert("Error: " + data.message);
+                showToast("Server Error: " + data.message, "danger");
             }
         })
         .catch(err => {
             console.error("Fetch Error:", err);
-            alert("Failed to connect to the server.");
+            showToast("Connection failed.", "danger");
         });
     });
 }
