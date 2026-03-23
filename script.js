@@ -166,7 +166,7 @@ function formatInboundDate(input) {
 document.getElementById("csvUpload").addEventListener("change", function (e) {
   const file = e.target.files[0];
   if (!file) return;
-
+  
   const fileName = file.name.toLowerCase();
   const statusDiv = document.getElementById("uploadStatus");
 
@@ -196,7 +196,31 @@ document.getElementById("csvUpload").addEventListener("change", function (e) {
     statusDiv.className = "mt-2 small fw-bold text-success text-center";
     statusDiv.innerHTML = `✔ Format Verified (${cleanedData.length} rows). Click 'Save to Database'.`;
   };
+  // Inside your document.getElementById("csvUpload") listener...
 
+if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
+            handleFileProcess(jsonData);
+        } catch (error) {
+            console.error("SheetJS Error:", error);
+            if (error.message.includes("Encrypted")) {
+                showToast("This file is password protected. Please remove the password and try again.", "danger");
+            } else {
+                showToast("Failed to read Excel file. It might be corrupted.", "danger");
+            }
+            // Clear the input so the user can try a different file
+            document.getElementById("csvUpload").value = "";
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
   // Process Excel Files
   if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
     const reader = new FileReader();
