@@ -652,6 +652,31 @@ function showToast(message, type = "info") {
   const toast = new bootstrap.Toast(toastEl);
   toast.show();
 }
+
+function sendDashboardEmail() {
+    const element = document.querySelector(".report-container");
+    
+    html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#f5f6f8"
+    }).then(canvas => {
+        const base64Image = canvas.toDataURL("image/jpeg", 0.8);
+
+        fetch("send_email.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                image: base64Image, // Sending the actual screenshot
+                dateRange: document.getElementById("dynamicDateDisplay").innerText
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) alert("Email sent with dashboard screenshot!");
+        });
+    });
+}
 /**
  * Precise Dashboard Capture
  * Targets only the report area, ignoring sidebar and topbar
