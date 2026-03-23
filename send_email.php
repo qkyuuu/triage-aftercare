@@ -144,7 +144,7 @@ $emailBody = '
 $flowUrl = "https://default10f787270c1845afb9ee97e94fd5bc.d8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/babe04e0152246ce8b282f17605d9fa5/triggers/manual/paths/invoke?api-version=1";
 
 $data = [
-    "ToEmail" => "your@email.com",
+    "ToEmail" => "v-jopastoral@microsoft.com",
     "SubjectText" => "Social Triage Report",
     "BodyText" => $emailBody
 ];
