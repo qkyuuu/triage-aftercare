@@ -168,32 +168,33 @@ document.getElementById("csvUpload").addEventListener("change", function (e) {
   if (!file) return;
 
   const fileName = file.name.toLowerCase();
+  const statusDiv = document.getElementById("uploadStatus");
 
+  // Define the handler inside to ensure it has access to the scope
   const handleFileProcess = (data) => {
+    console.log("Processing data:", data); // Debugging line
+
     // A. Verify if the user uses the same format
     if (!validateFormat(data)) {
-      tempUploadData = null; // Clear any previously loaded data
-      this.value = ""; // Clear the file input
+      tempUploadData = null; 
+      this.value = ""; 
       return;
     }
 
-    // B. CLEAN DATA: Convert Inbound Message Date to YYYY-MM-DD for the Database
+    // B. CLEAN DATA
     const cleanedData = data.map((row) => {
       if (row["Inbound Message Date"]) {
-        row["Inbound Message Date"] = formatInboundDate(
-          row["Inbound Message Date"],
-        );
+        row["Inbound Message Date"] = formatInboundDate(row["Inbound Message Date"]);
       }
       return row;
     });
 
-    // Store the verified and cleaned data in the global temp variable
+    // CRITICAL FIX: Assign to the global variable
     tempUploadData = cleanedData;
 
-    const statusDiv = document.getElementById("uploadStatus");
     statusDiv.style.display = "block";
     statusDiv.className = "mt-2 small fw-bold text-success text-center";
-    statusDiv.innerHTML = `✔ Format Verified (${data.length} rows). Click 'Save to Database'.`;
+    statusDiv.innerHTML = `✔ Format Verified (${cleanedData.length} rows). Click 'Save to Database'.`;
   };
 
   // Process Excel Files
@@ -201,23 +202,29 @@ document.getElementById("csvUpload").addEventListener("change", function (e) {
     const reader = new FileReader();
     reader.onload = function (e) {
       const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array", cellDates: false });
+      const workbook = XLSX.read(data, { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      // Convert sheet to JSON and pass to handler
-      handleFileProcess(XLSX.utils.sheet_to_json(firstSheet));
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: null });
+      handleFileProcess(jsonData);
     };
     reader.readAsArrayBuffer(file);
-  }
+  } 
   // Process CSV Files
-  else {
+  else if (fileName.endsWith(".csv")) {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       dynamicTyping: true,
       complete: function (results) {
-        handleFileProcess(results.data);
+        if (results.data && results.data.length > 0) {
+          handleFileProcess(results.data);
+        } else {
+          showToast("CSV file appears to be empty.", "danger");
+        }
       },
     });
+  } else {
+    showToast("Unsupported file format. Please upload CSV or Excel.", "danger");
   }
 });
 
