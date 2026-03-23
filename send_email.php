@@ -36,6 +36,7 @@ if (!$input || !isset($input['image'])) {
 
 $imageData = $input['image']; // The Base64 string
 $dateRange = $input['dateRange'] ?? 'Latest Report';
+$recipientEmail = $input['recipient'] ?? 'v-jopastoral@microsoft.com';
 
 // 3. Construct the Email Body (HTML)
 $emailBody = "
@@ -62,7 +63,7 @@ $emailBody = "
 $flowUrl = "https://default10f787270c1845afb9ee97e94fd5bc.d8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/babe04e0152246ce8b282f17605d9fa5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=x51ZUJuSWT1NSbpct3opH1wCkPIJDHfin5zX7L-dpfA";
 
 $payload = [
-    "ToEmail" => "v-jopastoral@microsoft.com",
+    "ToEmail" => $recipientEmail, // UPDATED: Now uses the dynamic variable
     "SubjectText" => "Social Triage Report: " . $dateRange,
     "BodyText" => $emailBody
 ];
