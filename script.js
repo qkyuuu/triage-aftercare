@@ -654,26 +654,49 @@ function showToast(message, type = "info") {
 }
 
 function sendDashboardEmail() {
+    // 1. Target the .page-area or .report-container
     const element = document.querySelector(".report-container");
-    
+
+    if (!element) {
+        alert("Report area not found!");
+        return;
+    }
+
+    // 2. Capture the element as a canvas
     html2canvas(element, {
-        scale: 2,
+        scale: 2, // Keeps it sharp
         useCORS: true,
         backgroundColor: "#f5f6f8"
     }).then(canvas => {
-        const base64Image = canvas.toDataURL("image/jpeg", 0.8);
+        // 3. Convert to Base64 Image string
+        const base64Image = canvas.toDataURL("image/jpeg", 0.7); // 0.7 reduces file size for faster sending
 
+        // 4. Get the date from your dashboard
+        const dateText = document.getElementById("dynamicDateDisplay")?.innerText || "Latest Report";
+
+        // 5. POST to your PHP
         fetch("send_email.php", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({
-                image: base64Image, // Sending the actual screenshot
-                dateRange: document.getElementById("dynamicDateDisplay").innerText
+                image: base64Image, // THIS MUST MATCH PHP $input['image']
+                dateRange: dateText
             })
         })
-        .then(res => res.json())
+        .then(response => response.json())
         .then(data => {
-            if(data.success) alert("Email sent with dashboard screenshot!");
+            console.log("PARSED:", data);
+            if (data.success) {
+                alert("Email sent successfully!");
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error("Fetch Error:", err);
+            alert("Failed to connect to the server.");
         });
     });
 }
