@@ -25,20 +25,20 @@
       href="https://eventsprguide.infinityfree.me/img/dashboard.png"
       type="image/svg+xml"
     />
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
-<script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
   </head>
   <body>
     <nav class="topbar">
       <div class="page-title">
-       <h1 class="mb-0" style="font-size: 1.25rem">
-  <strong>
-    Social Triage Report 
-    <button type="button" id="startTourBtn" style="background: none; border: none; color: inherit; padding: 0; cursor: pointer;">
-      <i class="bi bi-question-circle"></i>
-    </button>
-  </strong>
-</h1>
+        <h1 class="mb-0" style="font-size: 1.25rem">
+          <strong>
+            Social Triage Report 
+            <button type="button" id="startTourBtn" style="background: none; border: none; color: inherit; padding: 0; cursor: pointer;">
+              <i class="bi bi-question-circle"></i>
+            </button>
+          </strong>
+        </h1>
       </div>
       <div class="sendBtn">
         <button type="button" id="sendPreviewBtn" class="btn btn-send">
@@ -56,22 +56,21 @@
       <aside class="sidebar">
         <div class="prInfo-div">
           <div class="sidebar-group mb-4">
-            <label for="viewRegion" class="sidebar-label">Region</label> <div class="custom-input-wrapper">
-    <div class="input-icon-box bg-primary">
-      <i class="bi bi-geo-alt text-white"></i>
-    </div>
+            <label for="viewRegion" class="sidebar-label">Region</label>
+            <div class="custom-input-wrapper">
+              <div class="input-icon-box bg-primary">
+                <i class="bi bi-geo-alt text-white"></i>
+              </div>
               <select class="form-select custom-select" id="viewRegion" name="region">
-      <option selected disabled>Select Region...</option>
-      <option value="ASIA">ASIA</option>
-      <option value="AMERICA">AMERICA</option>
-      <option value="EMEA">EMEA</option>
-    </select>
+                <option selected disabled>Select Region...</option>
+                <option value="ASIA">ASIA</option>
+                <option value="AMERICA">AMERICA</option>
+                <option value="EMEA">EMEA</option>
+              </select>
             </div>
           </div>
           <div class="sidebar-group mb-4">
-            <label for="dateRange" class="sidebar-label"
-              >Report Date Range</label
-            >
+            <label for="dateRange" class="sidebar-label">Report Date Range</label>
             <div class="custom-input-wrapper">
               <div class="input-icon-box bg-primary">
                 <i class="bi bi-calendar3 text-white"></i>
@@ -106,52 +105,52 @@
             ></textarea>
           </div>
             
-    <button type="button" id="viewReportBtn" class="btn btn-outline-primary btn-sm w-100 mt-2">View Report</button>
+          <button type="button" id="viewReportBtn" class="btn btn-outline-primary btn-sm w-100 mt-2">View Report</button>
           <hr class="sidebar-divider" />
         </div>
           
         <div class="sidebar-section px-4 p-3" style="background-color:#f2f2f2">
-  <button 
-    type="button" 
-    id="toggleUploadBtn" 
-    class="btn btn-outline-primary btn-sm w-100 d-flex justify-content-between align-items-center"
-    style="border-style: dashed; font-weight: 600;"
-  >
-    <span><i class="bi bi-cloud-arrow-up me-2"></i>Upload New Data</span>
-    <i class="bi bi-chevron-down toggle-icon" id="toggleIcon"></i>
-  </button>
+          <button 
+            type="button" 
+            id="toggleUploadBtn" 
+            class="btn btn-outline-primary btn-sm w-100 d-flex justify-content-between align-items-center"
+            style="border-style: dashed; font-weight: 600;"
+          >
+            <span><i class="bi bi-cloud-arrow-up me-2"></i>Upload New Data</span>
+            <i class="bi bi-chevron-down toggle-icon" id="toggleIcon"></i>
+          </button>
 
-  <div id="uploadCollapseContent" style="display: none;">
-    <div class="my-3">
-      <label class="form-label small fw-bold">Select Region</label>
-      <select id="uploadRegion" class="form-select form-select-sm">
-        <option selected>Select Region...</option>
-        <option value="ASIA">ASIA</option>
-        <option value="AMERICA">AMERICA</option>
-        <option value="EMEA">EMEA</option>
-      </select>
-    </div>
-    
-    <div class="mb-3">
-      <label class="form-label small fw-bold">Select File</label>
-      <input class="form-control form-control-sm" type="file" id="csvUpload" accept=".csv, .xlsx, .xls" />
-    </div>
+          <div id="uploadCollapseContent" style="display: none;">
+            <div class="my-3">
+              <label class="form-label small fw-bold">Select Region</label>
+              <select id="uploadRegion" class="form-select form-select-sm">
+                <option selected>Select Region...</option>
+                <option value="ASIA">ASIA</option>
+                <option value="AMERICA">AMERICA</option>
+                <option value="EMEA">EMEA</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Select File</label>
+              <input class="form-control form-control-sm" type="file" id="csvUpload" accept=".csv, .xlsx, .xls" />
+            </div>
 
-    <button type="button" id="dbSaveBtn" class="btn btn-primary btn-sm w-100">
-      Save to Database
-    </button>
-    
-    <div id="uploadStatus" class="mt-2 text-center" style="display: none;"></div>
-  </div>
-</div>
+            <button type="button" id="dbSaveBtn" class="btn btn-primary btn-sm w-100">
+              Save to Database
+            </button>
+            
+            <div id="uploadStatus" class="mt-2 text-center" style="display: none;"></div>
+          </div>
+        </div>
       </aside>
 
       <main class="page-area">
         <div id="form-sections">
           <div class="report-container">
-              <div style="padding-bottom:5px; margin-bottom: 10px;border-bottom:2px solid #071952">
-              <h2 class="fw-bold" style="color:#071952;">Social Traige After-care Service</h2>
-              </div>
+            <div style="padding-bottom:5px; margin-bottom: 10px;border-bottom:2px solid #071952">
+              <h2 class="fw-bold" style="color:#071952;">Social Triage After-care Service</h2>
+            </div>
             <div id="dynamicDateDisplay" class="fw-bold text-muted mb-3">
               January 1, 2026
             </div>
@@ -211,16 +210,16 @@
                   </div>
                 </div>
 
-               <div class="chart-card">
-  <div class="fw-bold mb-3 text-uppercase text-muted">
-    Performance by Accounts/Handles
-  </div>
-  <div id="accountHandlesContainer" class="bar-container">
-    <p class="small text-muted text-center w-100">
-      Upload CSV/Excel to see account performance
-    </p>
-  </div>
-</div>
+                <div class="chart-card">
+                  <div class="fw-bold mb-3 text-uppercase text-muted">
+                    Performance by Accounts/Handles
+                  </div>
+                  <div id="accountHandlesContainer" class="bar-container">
+                    <p class="small text-muted text-center w-100">
+                      Upload CSV/Excel to see account performance
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -233,18 +232,18 @@
               </div>
 
               <div class="chart-card">
-  <div class="fw-bold mb-3 small text-uppercase text-muted">
-    Performance by Message Type
-  </div>
-  <div class="d-flex align-items-center">
-    <div id="messageTypeContainer" 
-         style="width: 120px; height: 120px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-    </div>
-    
-    <div id="typeLegend" class="ms-4 flex-grow-1">
-      </div>
-  </div>
-</div>
+                <div class="fw-bold mb-3 small text-uppercase text-muted">
+                  Performance by Message Type
+                </div>
+                <div class="d-flex align-items-center">
+                  <div id="messageTypeContainer" 
+                       style="width: 120px; height: 120px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+                  </div>
+                  
+                  <div id="typeLegend" class="ms-4 flex-grow-1">
+                  </div>
+                </div>
+              </div>
 
               <div class="metric-box">
                 <div class="fw-bold mb-3 small text-uppercase text-muted">
@@ -286,34 +285,34 @@
         </div>
       </main>
     </form>
-	<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
-  <div id="liveToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-      <div class="toast-body" id="toastMessage">
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
+      <div id="liveToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body" id="toastMessage">
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-  </div>
-</div>
-	  <div class="modal fade" id="emailModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">🚀 Send Report</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <label for="destinationEmail" class="form-label">Recipient Email Address</label>
-        <input type="email" class="form-control" id="destinationEmail" placeholder="name@example.com" required>
-        <div id="emailError" class="text-danger small mt-1" style="display:none;">Please enter a valid email.</div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="confirmSendBtn">Send Now</button>
       </div>
     </div>
-  </div>
-</div>
+    <div class="modal fade" id="emailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">🚀 Send Report</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label for="destinationEmail" class="form-label">Recipient Email Address</label>
+            <input type="email" class="form-control" id="destinationEmail" placeholder="name@example.com" required>
+            <div id="emailError" class="text-danger small mt-1" style="display:none;">Please enter a valid email.</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirmSendBtn">Send Now</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
