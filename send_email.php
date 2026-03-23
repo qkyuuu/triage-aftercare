@@ -42,11 +42,6 @@ $recipientEmail = $input['recipient'] ?? 'v-jopastoral@microsoft.com';
 $emailBody = "
 <div style='font-family: Arial, sans-serif; padding: 30px; text-align: center;'>
     <div style='max-width: 850px; margin: 0 auto; background: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #e5e5e7; box-shadow: 0 4px 10px rgba(0,0,0,0.05);'>
-        
-        // <div style='padding-bottom:15px; margin-bottom: 20px; border-bottom: 2px solid #071952; text-align: left;'>
-        //     <h2 style='color: #071952; margin: 0; font-size: 24px;'>Social Triage After-care Service</h2>
-        //     <div style='color: #888; font-weight: bold; font-size: 14px; margin-top: 5px;'>Performance Report: $dateRange</div>
-        // </div>
 
         <div style='margin-bottom: 25px;'>
             <img src='$imageData' alt='Dashboard Report' style='width: 100%; max-width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid #ddd;'>
