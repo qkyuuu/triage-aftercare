@@ -637,7 +637,7 @@ document
     if (!dashboardMetrics) {
       return showToast("Please view a report first!", "warning");
     }
-    sendReportEmail();
+    sendDashboardEmail();
   });
 //upload section toggle
 const toggleBtn = document.getElementById("toggleUploadBtn");
