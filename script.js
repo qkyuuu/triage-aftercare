@@ -323,19 +323,22 @@ function updateDashboard(data) {
     topAccounts.forEach(([name, count], index) => {
       const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
       const color = colors[index] || colors[4];
-      accountContainer.insertAdjacentHTML("beforeend", `
-      <div class="d-flex align-items-center mb-2" style="gap: 12px;">
-        <div style="min-width: 200px; display: flex; justify-content: space-between; align-items: center;">
-          <span class="fw-bold" style="font-size: 14px; white-space: nowrap; overflow: hidden; max-width: 150px;">${name}</span>
-          <span class="text-muted" style="font-size: 12px;">${pct}%</span>
-        </div>
-        <div class="flex-grow-1">
-          <div class="progress" style="height: 12px; background-color: #e9ecef; border-radius: 10px;">
-            <div class="progress-bar" style="width: ${pct}%; background-color: ${color}; border-radius: 10px;"></div>
-          </div>
-        </div>
-        <div style="min-width: 25px; text-align: right; font-size: 12px; color: #888;">${count}</div>
-      </div>`);
+     // Inside the topAccounts.forEach loop in script.js
+accountContainer.insertAdjacentHTML("beforeend", `
+<div class="d-flex align-items-center mb-3" style="gap: 12px; width: 100%;">
+  <div style="min-width: 160px; flex-shrink: 0;">
+    <span class="fw-bold" style="font-size: 13px;">${name}</span>
+  </div>
+  <div style="width: 45px; flex-shrink: 0; text-align: right;">
+    <span class="text-muted" style="font-size: 11px;">${pct}%</span>
+  </div>
+  <div class="flex-grow-1">
+    <div style="height: 10px; background-color: #eee; border-radius: 5px; overflow: hidden; width: 100%;">
+      <div style="width: ${pct}%; height: 100%; background-color: ${color}; border-radius: 5px; transition: width 0.5s ease;"></div>
+    </div>
+  </div>
+  <div style="min-width: 35px; text-align: right; font-size: 12px; font-weight: 500;">${count}</div>
+</div>`);
     });
   }
 
