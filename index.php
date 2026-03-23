@@ -144,8 +144,6 @@
     <div id="uploadStatus" class="mt-2 text-center" style="display: none;"></div>
   </div>
 </div>
-
-          </div>
       </aside>
 
       <main class="page-area">
