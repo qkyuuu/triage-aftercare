@@ -194,7 +194,9 @@ async function fetchAndDisplayReport() {
   const region = document.getElementById("viewRegion").value;
   const start = document.getElementById("startDate").value;
   const end = document.getElementById("endDate").value;
-
+  // Inside fetchAndDisplayReport()
+const url = `fetch_report.php?region=${encodeURIComponent(region)}&start=${start}&end=${end}`;
+const response = await fetch(url);
   if (region === "Select Region...") return showToast("Please select a region!", "warning");
   if (!start || !end) return showToast("Please select a date range!", "warning");
 
