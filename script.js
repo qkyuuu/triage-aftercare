@@ -232,69 +232,61 @@ const response = await fetch(url);
 function renderRSCCCharts(data) {
   const dailyData = {};
 
-  // 1. Group by actual date (YYYY-MM-DD) instead of Month
   data.forEach((row) => {
     const dateStr = row["Inbound Message Date"];
     if (!dateStr) return;
 
-    // Standardize the date key
     if (!dailyData[dateStr]) {
-      dailyData[dateStr] = { sent: 0, responded: 0 };
+      dailyData[dateStr] = { sent: 0, responded: 0, closed: 0, forResponse: 0 };
     }
 
     const count = parseInt(row["Inbound Count (SUM)"]) || 0;
     const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
 
+    // 1. Total Sent (All records)
     dailyData[dateStr].sent += count;
-    // Ensure "responded" matches your database value exactly
+
+    // 2. Total Responded
     if (stage.includes("responded")) {
       dailyData[dateStr].responded += count;
     }
+
+    // 3. Total Closed (Logic: stage is exactly 'closed')
+    if (stage === "closed") {
+      dailyData[dateStr].closed += count;
+    }
+
+    // 4. For Response (Logic: stage is 'for response' or 'pending')
+    if (stage.includes("for response") || stage.includes("pending")) {
+      dailyData[dateStr].forResponse += count;
+    }
   });
 
-  // 2. Sort dates chronologically
   const sortedDates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
   
-  // 3. Dynamic Logic for X-Axis Labels
+  // Dynamic Step Calculation
   const totalDays = sortedDates.length;
-  let stepSize = 1; // Show every day by default
+  let stepSize = 1;
+  if (totalDays > 31 && totalDays <= 62) stepSize = 7;
+  else if (totalDays > 62) stepSize = 14;
 
-  if (totalDays > 14 && totalDays <= 31) {
-    stepSize = 2; // ~1 month: show every other day
-  } else if (totalDays > 31 && totalDays <= 62) {
-    stepSize = 7; // ~2 months: show weekly
-  } else if (totalDays > 62) {
-    stepSize = 14; // 3+ months: show every 2 weeks
-  }
-
-  // 4. Format labels for display (e.g., "Feb 01")
   const displayLabels = sortedDates.map(dateStr => {
     const d = new Date(dateStr);
     return d.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
   });
 
-  const sentValues = sortedDates.map((d) => dailyData[d].sent);
-  const respValues = sortedDates.map((d) => dailyData[d].responded);
+  // Render all 4 Charts
+  renderSingleChart("chartSent", "Total Sent", displayLabels, 
+    sortedDates.map(d => dailyData[d].sent), "#071952", "rgba(7, 25, 82, 0.05)", stepSize);
 
-  // 5. Render charts with the new stepSize parameter
-  renderSingleChart(
-    "chartSent",
-    "Total Sent to SCC",
-    displayLabels,
-    sentValues,
-    "#071952",
-    "rgba(7, 25, 82, 0.05)",
-    stepSize
-  );
-  renderSingleChart(
-    "chartResponded",
-    "Total Responded",
-    displayLabels,
-    respValues,
-    "#088395",
-    "rgba(8, 131, 149, 0.05)",
-    stepSize
-  );
+  renderSingleChart("chartResponded", "Total Responded", displayLabels, 
+    sortedDates.map(d => dailyData[d].responded), "#088395", "rgba(8, 131, 149, 0.05)", stepSize);
+
+  renderSingleChart("chartClosed", "Total Closed", displayLabels, 
+    sortedDates.map(d => dailyData[d].closed), "#27ae60", "rgba(39, 174, 96, 0.05)", stepSize);
+
+  renderSingleChart("chartForResponse", "For Response", displayLabels, 
+    sortedDates.map(d => dailyData[d].forResponse), "#f39c12", "rgba(243, 156, 18, 0.05)", stepSize);
 }
 
 function renderSingleChart(id, label, labels, values, color, bgColor, stepSize = 1) {
