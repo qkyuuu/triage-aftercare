@@ -306,6 +306,13 @@
         <canvas id="chartResponded"></canvas>
       </div>
     </div>
+
+     <div class="chart-card mb-4">
+      <h5 class="fw-bold text-uppercase text-muted small mb-3" style="color:#088395 !important;">Total Closed</h5>
+      <div class="chart-container">
+        <canvas id="chartResponded"></canvas>
+      </div>
+    </div>
   </div>
 </div>
       </main>
