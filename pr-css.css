@@ -122,7 +122,21 @@ body {
   color: #888;
   font-size: 13px;
 }
+/* Container to give the Canvas a fixed height */
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
 
+/* Optional: Match the style of your other dashboard cards */
+#rsccView .chart-card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--sidebar-border);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
 .chart-card {
   border: 1px solid var(--border);
   border-radius: 12px;
