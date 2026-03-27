@@ -303,15 +303,10 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
     ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) 
     : 0;
 
-  // Check if plugins are available to avoid console errors
-  const plugins = [];
-  if (typeof ChartDataLabels !== 'undefined') {
-    plugins.push(ChartDataLabels);
-  }
-
   charts[id] = new Chart(ctx, {
     type: "line",
-    plugins: plugins, 
+    // Explicitly include DataLabels in the plugins array
+    plugins: [ChartDataLabels], 
     data: {
       labels: labels,
       datasets: [{
@@ -323,6 +318,7 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
         tension: 0.3, 
         pointRadius: labels.length > 40 ? 0 : 4,
         pointBackgroundColor: color,
+        // Data Labels settings
         datalabels: {
           align: 'top',
           anchor: 'end',
@@ -337,11 +333,12 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
       responsive: true,
       maintainAspectRatio: false,
       layout: {
-        padding: { top: 25 } // Extra room for data labels
+        padding: { top: 30, right: 10 } // Added more top padding for the Avg tag
       },
       plugins: { 
         legend: { display: false },
         tooltip: { mode: 'index', intersect: false },
+        // Annotation settings
         annotation: {
           annotations: {
             line1: {
@@ -355,8 +352,11 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
                 display: true,
                 content: `Avg: ${average}`,
                 position: 'end',
+                yAdjust: -15, // Moves the label slightly above the line
                 backgroundColor: 'rgba(255, 99, 132, 0.8)',
-                font: { size: 10 }
+                color: '#fff',
+                font: { size: 10, weight: 'bold' },
+                padding: 4
               }
             }
           }
@@ -377,7 +377,8 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
         y: {
           beginAtZero: true,
           ticks: { precision: 0 },
-          suggestedMax: values.length > 0 ? Math.max(...values) + 3 : 10 
+          // Ensure the graph ceiling is high enough to see the average line and labels
+          suggestedMax: Math.max(...values, parseFloat(average)) + 3
         }
       }
     },
