@@ -230,55 +230,74 @@ const response = await fetch(url);
 }
 
 function renderRSCCCharts(data) {
-  const monthlyData = {};
+  const dailyData = {};
 
+  // 1. Group by actual date (YYYY-MM-DD) instead of Month
   data.forEach((row) => {
     const dateStr = row["Inbound Message Date"];
     if (!dateStr) return;
 
-    const d = new Date(dateStr);
-    const month = d.toLocaleString("default", {
-      month: "short",
-      year: "numeric",
-    });
+    // Standardize the date key
+    if (!dailyData[dateStr]) {
+      dailyData[dateStr] = { sent: 0, responded: 0 };
+    }
+
     const count = parseInt(row["Inbound Count (SUM)"]) || 0;
     const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
 
-    if (!monthlyData[month]) {
-      monthlyData[month] = { sent: 0, responded: 0 };
+    dailyData[dateStr].sent += count;
+    // Ensure "responded" matches your database value exactly
+    if (stage.includes("responded")) {
+      dailyData[dateStr].responded += count;
     }
-
-    monthlyData[month].sent += count;
-    if (stage.includes("responded")) { 
-    monthlyData[month].responded += count;
-}
   });
 
-  const labels = Object.keys(monthlyData).sort(
-    (a, b) => new Date(a) - new Date(b),
-  );
-  const sentValues = labels.map((m) => monthlyData[m].sent);
-  const respValues = labels.map((m) => monthlyData[m].responded);
+  // 2. Sort dates chronologically
+  const sortedDates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+  
+  // 3. Dynamic Logic for X-Axis Labels
+  const totalDays = sortedDates.length;
+  let stepSize = 1; // Show every day by default
 
+  if (totalDays > 14 && totalDays <= 31) {
+    stepSize = 2; // ~1 month: show every other day
+  } else if (totalDays > 31 && totalDays <= 62) {
+    stepSize = 7; // ~2 months: show weekly
+  } else if (totalDays > 62) {
+    stepSize = 14; // 3+ months: show every 2 weeks
+  }
+
+  // 4. Format labels for display (e.g., "Feb 01")
+  const displayLabels = sortedDates.map(dateStr => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+  });
+
+  const sentValues = sortedDates.map((d) => dailyData[d].sent);
+  const respValues = sortedDates.map((d) => dailyData[d].responded);
+
+  // 5. Render charts with the new stepSize parameter
   renderSingleChart(
     "chartSent",
     "Total Sent to SCC",
-    labels,
+    displayLabels,
     sentValues,
     "#071952",
     "rgba(7, 25, 82, 0.05)",
+    stepSize
   );
   renderSingleChart(
     "chartResponded",
     "Total Responded",
-    labels,
+    displayLabels,
     respValues,
     "#088395",
     "rgba(8, 131, 149, 0.05)",
+    stepSize
   );
 }
 
-function renderSingleChart(id, label, labels, values, color, bgColor) {
+function renderSingleChart(id, label, labels, values, color, bgColor, stepSize = 1) {
   const ctx = document.getElementById(id);
   if (!ctx) return;
 
@@ -294,13 +313,35 @@ function renderSingleChart(id, label, labels, values, color, bgColor) {
         borderColor: color,
         fill: true,
         backgroundColor: bgColor,
-        tension: 0.4,
+        tension: 0.3, // Slightly lower tension for daily data accuracy
+        pointRadius: labels.length > 40 ? 0 : 3, // Hide dots if there are too many days
       }],
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // This is key for the fixed height
-      plugins: { legend: { display: false } },
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false } // Better tooltip for many dates
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            autoSkip: false, // We handle the skipping ourselves via callback
+            maxRotation: 45,
+            minRotation: 45,
+            callback: function(val, index) {
+              // Only show label if it matches our calculated step
+              return index % stepSize === 0 ? this.getLabelForValue(val) : '';
+            }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0 }
+        }
+      }
     },
   });
 }
