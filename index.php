@@ -56,6 +56,18 @@
       <aside class="sidebar">
         <div class="prInfo-div">
           <div class="sidebar-group mb-4">
+  <label for="reportCategory" class="sidebar-label">Report Category</label>
+  <div class="custom-input-wrapper">
+    <div class="input-icon-box bg-primary">
+      <i class="bi bi-layers text-white"></i>
+    </div>
+    <select class="form-select custom-select" id="reportCategory">
+      <option value="aftercare" selected>After Care Service Report</option>
+      <option value="rscc">RSCC Performance Report</option>
+    </select>
+  </div>
+</div>
+          <div class="sidebar-group mb-4">
             <label for="viewRegion" class="sidebar-label">Region</label>
             <div class="custom-input-wrapper">
               <div class="input-icon-box bg-primary">
@@ -70,29 +82,16 @@
             </div>
           </div>
           <div class="sidebar-group mb-4">
-            <label for="dateRange" class="sidebar-label">Report Date Range</label>
-            <div class="custom-input-wrapper">
-              <div class="input-icon-box bg-primary">
-                <i class="bi bi-calendar3 text-white"></i>
-              </div>
-              <div class="date-input-container">
-                <input
-                  type="text"
-                  id="startDate"
-                  class="date-picker-flat"
-                  value="2026-01-01"
-                />
-                <span class="date-separator">—</span>
-                <input
-                  type="text"
-                  id="endDate"
-                  class="date-picker-flat"
-                  value="2026-01-31"
-                />
-                <i class="bi bi-calendar-event text-muted ms-auto"></i>
-              </div>
-            </div>
-          </div>
+  <label id="dateLabel" class="sidebar-label">Select Date Range</label>
+  <div class="custom-input-wrapper">
+    <div class="input-icon-box bg-primary">
+      <i class="bi bi-calendar3 text-white"></i>
+    </div>
+    <input type="text" id="dateRangePicker" class="form-control custom-input" placeholder="Select dates...">
+    <input type="hidden" id="startDate" placeholder="Select start date...">
+    <input type="hidden" id="endDate" placeholder="Select end date...">
+  </div>
+</div>
 
           <div class="sidebar-group">
             <label class="sidebar-label">Comments & Feedback</label>
@@ -147,6 +146,7 @@
 
       <main class="page-area">
         <div id="form-sections">
+          <div id="afterCareView">
           <div class="report-container">
             <div style="padding-bottom:5px; margin-bottom: 10px;border-bottom:2px solid #071952">
               <h2 class="fw-bold" style="color:#071952;">Social Triage After-care Service</h2>
@@ -282,6 +282,25 @@
               </div>
             </div>
           </div>
+          </div>
+
+          <div id="rsccView" style="display: none;">
+    <div class="report-container">
+      <div style="padding-bottom:5px; margin-bottom: 10px; border-bottom:2px solid #071952">
+        <h2 class="fw-bold" style="color:#071952;">Social Triage RSCC Performance Report</h2>
+      </div>
+      <div id="rsccDateDisplay" class="fw-bold text-muted mb-3">January - March 2026</div>
+      
+      <div class="chart-card mb-4">
+        <h5>Total Sent to SCC</h5>
+        <canvas id="chartSent" style="height: 250px;"></canvas>
+      </div>
+      <div class="chart-card mb-4">
+        <h5>Total Responded to SCC</h5>
+        <canvas id="chartResponded" style="height: 250px;"></canvas>
+      </div>
+      </div>
+  </div>
         </div>
       </main>
     </form>
