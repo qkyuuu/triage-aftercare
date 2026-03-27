@@ -38,7 +38,7 @@ if ($stmt === false) {
 
 $data = [];
 while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
-    // FIX: Convert PHP DateTime objects to strings so JSON doesn't break
+    // This is the CRITICAL part
     if ($row['Inbound Message Date'] instanceof DateTime) {
         $row['Inbound Message Date'] = $row['Inbound Message Date']->format('Y-m-d');
     }
