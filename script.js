@@ -298,8 +298,14 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
 
   if (charts[id]) charts[id].destroy();
 
+  // Calculate Average for the dashed line
+  const average = values.length > 0 
+    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) 
+    : 0;
+
   charts[id] = new Chart(ctx, {
     type: "line",
+    plugins: [ChartDataLabels], // Register the datalabels plugin locally
     data: {
       labels: labels,
       datasets: [{
@@ -308,39 +314,72 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
         borderColor: color,
         fill: true,
         backgroundColor: bgColor,
-        tension: 0.3, // Slightly lower tension for daily data accuracy
-        pointRadius: labels.length > 40 ? 0 : 3, // Hide dots if there are too many days
+        tension: 0.3, 
+        pointRadius: labels.length > 40 ? 0 : 4,
+        pointBackgroundColor: color,
+        // --- DATA LABELS CONFIG ---
+        datalabels: {
+          align: 'top',
+          anchor: 'end',
+          offset: 2,
+          color: color,
+          font: { size: 10, weight: 'bold' },
+          formatter: (value) => value > 0 ? value : '' // Only show label if > 0
+        }
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: { top: 20 } // Space for the top data labels
+      },
       plugins: { 
         legend: { display: false },
-        tooltip: { mode: 'index', intersect: false } // Better tooltip for many dates
+        tooltip: { mode: 'index', intersect: false },
+        // --- ANNOTATION (AVERAGE LINE) CONFIG ---
+        annotation: {
+          annotations: {
+            line1: {
+              type: 'line',
+              yMin: average,
+              yMax: average,
+              borderColor: 'rgba(255, 99, 132, 0.7)', // Contrasting Red-ish color
+              borderWidth: 2,
+              borderDash: [6, 6], // Dashed effect
+              label: {
+                display: true,
+                content: `Avg: ${average}`,
+                position: 'end',
+                backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                font: { size: 10 }
+              }
+            }
+          }
+        }
       },
       scales: {
         x: {
           grid: { display: false },
           ticks: {
-            autoSkip: false, // We handle the skipping ourselves via callback
+            autoSkip: false,
             maxRotation: 45,
             minRotation: 45,
             callback: function(val, index) {
-              // Only show label if it matches our calculated step
               return index % stepSize === 0 ? this.getLabelForValue(val) : '';
             }
           }
         },
         y: {
           beginAtZero: true,
-          ticks: { precision: 0 }
+          ticks: { precision: 0 },
+          // Add a little extra space at the top so labels don't get cut off
+          suggestedMax: values.length > 0 ? Math.max(...values) + 2 : 10 
         }
       }
     },
   });
 }
-
 function updateDashboard(data) {
   const cleanData = data.filter((row) => row["Inbound Count (SUM)"] != null);
   const total = cleanData.length;
