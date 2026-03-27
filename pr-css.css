@@ -41,7 +41,7 @@ body {
   width: 340px;
   background: #ffffff;
   border-right: 1px solid var(--sidebar-border);
-    border-radius: 12px;
+  border-radius: 12px;
   position: fixed;
   top: 70px;
   bottom: 0;
@@ -49,9 +49,9 @@ body {
   padding: 24px;
   overflow-y: auto;
   z-index: 1000;
-    display:flex;
-    flex-direction: column;
-    justify-content: space-between
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .page-area {
@@ -61,10 +61,10 @@ body {
 }
 
 /* --- Sidebar Elements --- */
-.sidebar-section{
+.sidebar-section {
   transition: all 0.6s ease-in-out;
 }
-.uploadCollapseContent{
+.uploadCollapseContent {
   transition: all 0.6s ease-in-out;
 }
 .sidebar-label {
@@ -80,6 +80,7 @@ body {
 .form-control {
   border-radius: 8px;
   font-size: 14px;
+  cursor: pointer;
 }
 
 /* --- Dashboard Components --- */
@@ -98,7 +99,7 @@ body {
   width: 100%; /* Ensure the grid itself doesn't exceed 100% */
 }
 .performance-grid > .d-flex.flex-column {
-  min-width: 0; 
+  min-width: 0;
   width: 100%;
 }
 
@@ -127,8 +128,8 @@ body {
   border-radius: 12px;
   padding: 20px;
   background: #fff;
-  width: 100%;       /* Force card to stay within the column */
-  overflow: hidden;  /* Safety net: clips any internal overflow */
+  width: 100%; /* Force card to stay within the column */
+  overflow: hidden; /* Safety net: clips any internal overflow */
   box-sizing: border-box;
 }
 
@@ -144,7 +145,7 @@ body {
 }
 
 .bar {
-  width: 50px;             /* Increased width from 35px */
+  width: 50px; /* Increased width from 35px */
   border-radius: 4px 4px 0 0;
   transition: height 0.6s ease-in-out;
   position: relative;
@@ -155,7 +156,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px; /* Slightly tighter gap for a cleaner list look */
-  height: auto; 
+  height: auto;
   padding: 10px 0;
   width: 100%; /* Ensure it takes full width of the card */
 }
@@ -201,19 +202,19 @@ body {
 }
 /* The progress bar wrapper */
 .account-progress-wrapper {
-    flex-grow: 1;
-    margin: 0 15px;
-    background-color: #f0f0f0;
-    height: 8px;
-    border-radius: 10px;
-    position: relative;
+  flex-grow: 1;
+  margin: 0 15px;
+  background-color: #f0f0f0;
+  height: 8px;
+  border-radius: 10px;
+  position: relative;
 }
 
 /* The actual colored bar */
 .account-progress-fill {
-    height: 100%;
-    border-radius: 10px;
-    background-color: var(--primary); /* Or use dynamic colors */
+  height: 100%;
+  border-radius: 10px;
+  background-color: var(--primary); /* Or use dynamic colors */
 }
 /* This is the gray background of the bar */
 .bar-track {
@@ -275,6 +276,60 @@ body {
   border: 1px solid #ced4da;
   border-left: none;
 }
+/* Target the inputs directly and the extra ones Flatpickr creates */
+#startDate,
+#endDate,
+.flatpickr-input {
+  /* Fix the decimal point here */
+  padding: 0.375rem 2.25rem 0.375rem 0.75rem !important;
+  background-color: #fff !important;
+  border: 1px solid #ced4da !important;
+  border-radius: 0.25rem !important;
+  height: calc(1.5em + 0.75rem + 2px); /* Standard Bootstrap height */
+}
+.custom-input-wrapper .flatpickr-input:nth-of-type(2) {
+  margin-top: 10px !important;
+}
+/* Target the second visible date input specifically to add the top margin */
+.custom-input-wrapper .flatpickr-input:nth-of-type(2) {
+  margin-top: 10px !important;
+}
+
+/* Ensure the wrapper stacks them vertically */
+.custom-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Adjust the Icon Box to stay aligned with the top input */
+.custom-input-wrapper .input-icon-box {
+}
+/* Ensure the hidden original inputs don't take up space */
+#dateRangePicker {
+  display: none;
+}
+/* 1. Target the actual visible inputs created by Flatpickr */
+.flatpickr-input[readonly],
+.form-control.input {
+  padding: 0.375rem 0.75rem 0.375rem 3rem !important; /* Left padding 2.5rem to clear the icon */
+  background-color: #ffffff !important;
+  border: 1px solid #ced4da !important;
+  border-radius: 0.375rem !important;
+  height: 45px !important; /* Matches your Region dropdown height */
+  font-size: 0.9rem;
+  color: #000;
+  box-shadow: none !important;
+}
+.flatpickr-input[readonly]:hover,
+.form-control.input:hover {
+  cursor: pointer;
+}
+
+/* 3. Hide the dummy/original elements that aren't needed */
+#dateRangePicker {
+  display: none !important;
+}
 /* Container for the date section to handle positioning */
 .date-range-wrapper {
   position: relative;
@@ -304,20 +359,22 @@ body {
 .custom-input-wrapper {
   position: relative;
   padding-top: 10px; /* Space for the icon to pop up */
+  gap: 10px;
 }
 
 .input-icon-box {
   position: absolute;
-  top: 0;
-  left: 0;
   width: 38px;
-  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
   z-index: 10;
   box-shadow: 0 2px 4px rgba(7, 25, 82, 0.2);
+  left: 1px;
+  top: 10px; /* Aligns with the first input due to the padding-top you have */
+  height: 45px; /* Matches your input height */
+  z-index: 10;
 }
 #typeLegend div {
   white-space: nowrap;
@@ -436,11 +493,11 @@ body {
   align-items: center;
   justify-content: flex-end;
   height: 100%; /* Important: wrapper must be full height of container */
-  flex: 1; 
+  flex: 1;
 }
 
 .bar {
-  width: 100px; 
+  width: 100px;
   background-color: #071952; /* Ensure the bar has a color! */
   border-radius: 4px 4px 0 0;
   position: relative;
@@ -490,11 +547,11 @@ body {
   background-color: #071952 !important;
   text-shadow: none !important;
   border: none !important;
-  color:#FFFFFF !important;
+  color: #ffffff !important;
 }
 
 .driver-popover-progress-text {
-  color: #64B5F6 !important;
+  color: #64b5f6 !important;
 }
 /* --- Mobile Responsiveness --- */
 @media (max-width: 992px) {
