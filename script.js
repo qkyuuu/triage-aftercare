@@ -232,9 +232,6 @@ const response = await fetch(url);
 function renderRSCCCharts(data) {
   const dailyData = {};
 
-  // DEBUG: Check the console (F12) to see exactly what strings are in your data
-  console.log("Sample Data Row:", data[0]);
-
   data.forEach((row) => {
     const dateStr = row["Inbound Message Date"];
     if (!dateStr) return;
@@ -244,33 +241,24 @@ function renderRSCCCharts(data) {
     }
 
     const count = parseInt(row["Inbound Count (SUM)"]) || 0;
-    // Standardize to lowercase to prevent "Closed" vs "closed" mismatches
-    const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
+    // We remove .toLowerCase() to match the exact case-sensitive strings in your data
+    const stage = row["Routing Stage (in) (Message)"]; 
 
     // 1. Total Sent (All records)
     dailyData[dateStr].sent += count;
 
-    // 2. Total Responded
-    if (stage.includes("responded")) {
+    // 2. Total Responded (Matches "Responded To")
+    if (stage === "Responded To") {
       dailyData[dateStr].responded += count;
     }
 
-    // 3. Total Closed (FIXED: Changed from === to .includes)
-    if (
-      stage.includes("closed") || 
-      stage.includes("handled") || 
-      stage.includes("resolved") || 
-      stage.includes("non-actionable") // <--- This matches your After-care 17 items
-    ) {
+    // 3. Total Closed (Matches "Non-Actionable" strictly)
+    if (stage === "Non-Actionable") {
       dailyData[dateStr].closed += count;
     }
 
-    // 4. For Response (Logic: includes 'for response' or 'pending')
-    if (
-      stage.includes("for response") || 
-      stage.includes("pending") || 
-      stage === "new"
-    ) {
+    // 4. For Response (Matches "New" or "For Response")
+    if (stage === "New" || stage === "For Response") {
       dailyData[dateStr].forResponse += count;
     }
   });
@@ -301,6 +289,7 @@ function renderRSCCCharts(data) {
   renderSingleChart("chartForResponse", "For Response", displayLabels, 
     sortedDates.map(d => dailyData[d].forResponse), "#f39c12", "rgba(243, 156, 18, 0.05)", stepSize);
 }
+
 function renderSingleChart(id, label, labels, values, color, bgColor, stepSize = 1) {
   const ctx = document.getElementById(id);
   if (!ctx) return;
