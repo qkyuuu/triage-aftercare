@@ -16,8 +16,9 @@ if (!$request || !isset($request['data'])) {
     ]));
 }
 
-$region = $request['region'];
-$date = $request['date']; 
+$region = $request['region'] ?? 'Unknown';
+// Use provided date or fallback to today's date for the upload timestamp
+$uploadDate = $request['date'] ?? date('Y-m-d'); 
 $dataRows = $request['data'];
 
 $insertedCount = 0;
@@ -25,9 +26,10 @@ $skippedCount = 0;
 
 foreach ($dataRows as $i => $row) {
 
-    // Mapping Excel columns to PHP variables
+    // 1. Mapping Excel/CSV columns to PHP variables
+    // We ensure types are cast correctly to avoid SQL Server confusion
     $inbound   = isset($row['Inbound Count (SUM)']) ? (int)$row['Inbound Count (SUM)'] : 0;
-    $msgDate   = $row['Inbound Message Date'] ?? null; 
+    $msgDate   = !empty($row['Inbound Message Date']) ? $row['Inbound Message Date'] : null; 
     $stage     = $row['Routing Stage (in) (Message)'] ?? '';
     $area      = $row['Country (in) (Message)'] ?? ''; 
     $macro     = $row['Macro Tracker (Message)'] ?? ''; 
@@ -37,49 +39,49 @@ foreach ($dataRows as $i => $row) {
     $sentiment = $row['Sentiment'] ?? '';
     $uID       = $row['Universal Message ID'] ?? '';
 
-    // Only process if we have a Unique ID
+    // Only process if we have a Unique ID to prevent empty row errors
     if (!empty($uID)) {
 
-        // Logic: Only INSERT if the universal_message_id does not already exist
+        // 2. SQL Logic: 13 Total Question Marks
         $sql = "IF NOT EXISTS (SELECT 1 FROM triage_uploads WHERE universal_message_id = ?)
                 BEGIN
                     INSERT INTO triage_uploads (
-                        region, upload_date, inbound_message_date, inbound_count,
-                        routing_stage, global_area, macro_tracker, account_handle,
-                        message_type, social_network, sentiment, universal_message_id
+                        region, 
+                        upload_date, 
+                        inbound_message_date, 
+                        inbound_count,
+                        routing_stage, 
+                        global_area, 
+                        macro_tracker, 
+                        account_handle,
+                        message_type, 
+                        social_network, 
+                        sentiment, 
+                        universal_message_id
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 END";
 
-        // Note: $uID is passed TWICE. Once for the IF NOT EXISTS check, and once for the INSERT.
+        // 3. Parameters must perfectly align with the order of the ? placeholders above
         $params = [
-            $uID, // For the check
-            $region, $date, $msgDate, $inbound,
-            $stage, $area, $macro, $account,
-            $account, // Ensure this matches your mapping (msgType follows)
-            $network, $sentiment, $uID // For the insert
-        ];
-
-        // Corrected Parameter Order based on your SQL above:
-        $params = [
-            $uID,      // 1. For "IF NOT EXISTS"
-            $region,   // 2. region
-            $date,     // 3. upload_date
-            $msgDate,  // 4. inbound_message_date
-            $inbound,  // 5. inbound_count
-            $stage,    // 6. routing_stage
-            $area,     // 7. global_area
-            $macro,    // 8. macro_tracker
-            $account,  // 9. account_handle
-            $msgType,  // 10. message_type
-            $network,  // 11. social_network
-            $sentiment,// 12. sentiment
-            $uID       // 13. universal_message_id
+            $uID,         // 1.  Check for existing ID
+            $region,      // 2.  region
+            $uploadDate,  // 3.  upload_date
+            $msgDate,     // 4.  inbound_message_date (The critical date string)
+            $inbound,     // 5.  inbound_count
+            $stage,       // 6.  routing_stage
+            $area,        // 7.  global_area
+            $macro,       // 8.  macro_tracker
+            $account,     // 9.  account_handle
+            $msgType,     // 10. message_type
+            $network,     // 11. social_network
+            $sentiment,   // 12. sentiment
+            $uID          // 13. universal_message_id (Final insertion)
         ];
 
         $stmt = sqlsrv_query($conn, $sql, $params);
 
         if ($stmt) {
-            // sqlsrv_rows_affected returns 1 if INSERT happened, 0 if IF NOT EXISTS skipped it
+            // Check if an actual INSERT happened or if it was skipped by the IF NOT EXISTS logic
             $rowsAffected = sqlsrv_rows_affected($stmt);
             if ($rowsAffected > 0) {
                 $insertedCount++;
@@ -98,7 +100,7 @@ foreach ($dataRows as $i => $row) {
     }
 }
 
-// Final Success Response with your requested feedback format
+// 4. Return final JSON response
 echo json_encode([
     "status" => "success", 
     "message" => "$skippedCount records already exist. $insertedCount new records added."
