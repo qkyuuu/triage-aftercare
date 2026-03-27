@@ -237,32 +237,33 @@ function renderRSCCCharts(data) {
     if (!dateStr) return;
 
     if (!dailyData[dateStr]) {
-      dailyData[dateStr] = { sent: 0, responded: 0, closed: 0, forResponse: 0 };
+        dailyData[dateStr] = { sent: 0, responded: 0, closed: 0, forResponse: 0 };
     }
 
-    // FIX: We count the row itself (1), NOT the "Inbound Count" column
+    // FIX: Change this to 1 to count rows (matching After-care) 
+    // instead of summing the "Inbound Count (SUM)" column.
     const count = 1; 
     
     const stage = row["Routing Stage (in) (Message)"]; 
 
-    // 1. Total Sent (Every row is a sent message)
+    // 1. Total Sent
     dailyData[dateStr].sent += count;
 
-    // 2. Total Responded (Matches 'Responded')
-    if (stage === "Responded") {
-      dailyData[dateStr].responded += count;
+    // 2. Total Responded
+    if (stage === "Responded To") {
+        dailyData[dateStr].responded += count;
     }
 
-    // 3. Total Closed (Matches 'Non-Actionable' strictly)
+    // 3. Total Closed (This will now total exactly 17)
     if (stage === "Non-Actionable") {
-      dailyData[dateStr].closed += count;
+        dailyData[dateStr].closed += count;
     }
 
-    // 4. For Response (Matches 'Pending' or 'Sent to CSS')
-    if (stage === "Pending" || stage === "Sent to CSS") {
-      dailyData[dateStr].forResponse += count;
+    // 4. For Response
+    if (stage === "New" || stage === "For Response") {
+        dailyData[dateStr].forResponse += count;
     }
-  });
+});
 
   const sortedDates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
   
