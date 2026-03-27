@@ -518,7 +518,10 @@ body {
   transition: height 0.5s ease;
   min-height: 2px; /* Visual sliver for 0 values */
 }
-
+.bar-label{
+  display: grid;
+  place-items:center;
+}
 /* Tooltip on hover */
 .bar:hover::after {
   content: attr(title);
