@@ -288,20 +288,18 @@ function renderSingleChart(id, label, labels, values, color, bgColor) {
     type: "line",
     data: {
       labels: labels,
-      datasets: [
-        {
-          label: label,
-          data: values,
-          borderColor: color,
-          fill: true,
-          backgroundColor: bgColor,
-          tension: 0.4,
-        },
-      ],
+      datasets: [{
+        label: label,
+        data: values,
+        borderColor: color,
+        fill: true,
+        backgroundColor: bgColor,
+        tension: 0.4,
+      }],
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, // This is key for the fixed height
       plugins: { legend: { display: false } },
     },
   });
