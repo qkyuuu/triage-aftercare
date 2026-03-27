@@ -195,29 +195,36 @@ async function fetchAndDisplayReport() {
   const start = document.getElementById("startDate").value;
   const end = document.getElementById("endDate").value;
 
-  if (region === "Select Region...")
-    return showToast("Please select a region!", "warning");
-  if (!start || !end)
-    return showToast("Please select a date range!", "warning");
+  // Validation
+  if (region === "Select Region...") return showToast("Please select a region!", "warning");
+  if (!start || !end) return showToast("Please select a date range!", "warning");
 
   try {
-    const response = await fetch(
-      `fetch_report.php?region=${region}&start=${start}&end=${end}`,
-    );
+    // 1. Build the query string
+    const url = `fetch_report.php?region=${encodeURIComponent(region)}&start=${start}&end=${end}`;
+    
+    // 2. Fetch the data
+    const response = await fetch(url);
     const data = await response.json();
 
     if (!data || data.length === 0) {
-      showToast("No data found for the selected filters.", "warning");
-      return;
+      return showToast("No data found for the selected filters.", "warning");
     }
 
+    // 3. Conditional Execution: Only run the function for the selected category
     if (category === "rscc") {
-      renderRSCCCharts(data);
-    } else {
-      updateDashboard(data);
+      console.log("Fetching for RSCC Performance...");
+      renderRSCCCharts(data); 
+      // After-care logic is ignored here
+    } else if (category === "aftercare") {
+      console.log("Fetching for After Care Service...");
+      updateDashboard(data); 
+      // RSCC logic is ignored here
     }
+
   } catch (e) {
-    showToast("Error fetching data.", "danger");
+    console.error("Fetch Error:", e);
+    showToast("Error fetching data. Check database connection.", "danger");
   }
 }
 
