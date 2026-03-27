@@ -285,27 +285,28 @@
           </div>
           </div>
 
-          <div id="rsccView" style="display: none;">
-    <div class="report-container">
-        <div style="padding-bottom:5px; margin-bottom: 10px; border-bottom:2px solid #071952">
-            <h2 class="fw-bold" style="color:#071952;">Social Triage RSCC Performance Report</h2>
-        </div>
-        <div id="rsccDateDisplay" class="fw-bold text-muted mb-3">January - March 2026</div>
-        
-        <div class="chart-card mb-4">
-            <h5 class="fw-bold" style="color:#071952;">Total Sent to SCC</h5>
-            <div style="height: 300px; position: relative;">
-                <canvas id="chartSent"></canvas>
-            </div>
-        </div>
-
-        <div class="chart-card mb-4">
-            <h5 class="fw-bold" style="color:#088395;">Total Responded to SCC</h5>
-            <div style="height: 300px; position: relative;">
-                <canvas id="chartResponded"></canvas>
-            </div>
-        </div>
+<div id="rsccView" style="display: none;">
+  <div class="report-container">
+    <div style="padding-bottom:5px; margin-bottom: 20px; border-bottom:2px solid #071952">
+      <h2 class="fw-bold" style="color:#071952;">Social Triage RSCC Performance Report</h2>
     </div>
+    
+    <div id="rsccDateDisplay" class="fw-bold text-muted mb-4">January - March 2026</div>
+    
+    <div class="chart-card mb-4">
+      <h5 class="fw-bold text-uppercase text-muted small mb-3">Total Sent to SCC</h5>
+      <div class="chart-container">
+        <canvas id="chartSent"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card mb-4">
+      <h5 class="fw-bold text-uppercase text-muted small mb-3" style="color:#088395 !important;">Total Responded to SCC</h5>
+      <div class="chart-container">
+        <canvas id="chartResponded"></canvas>
+      </div>
+    </div>
+  </div>
 </div>
       </main>
     </form>
