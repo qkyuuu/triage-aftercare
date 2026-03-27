@@ -8,6 +8,7 @@ $end = $_GET['end'] ?? '';
 
 $sql = "SELECT 
     inbound_count AS [Inbound Count (SUM)], 
+    inbound_message_date AS [Inbound Message Date], -- ADDED THIS LINE
     routing_stage AS [Routing Stage (in) (Message)], 
     global_area AS [Country (in) (Message)], 
     macro_tracker AS [Macro Tracker (Message)], 
