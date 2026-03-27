@@ -298,14 +298,20 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
 
   if (charts[id]) charts[id].destroy();
 
-  // Calculate Average for the dashed line
+  // Calculate Average
   const average = values.length > 0 
     ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) 
     : 0;
 
+  // Check if plugins are available to avoid console errors
+  const plugins = [];
+  if (typeof ChartDataLabels !== 'undefined') {
+    plugins.push(ChartDataLabels);
+  }
+
   charts[id] = new Chart(ctx, {
     type: "line",
-    plugins: [ChartDataLabels], // Register the datalabels plugin locally
+    plugins: plugins, 
     data: {
       labels: labels,
       datasets: [{
@@ -317,14 +323,13 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
         tension: 0.3, 
         pointRadius: labels.length > 40 ? 0 : 4,
         pointBackgroundColor: color,
-        // --- DATA LABELS CONFIG ---
         datalabels: {
           align: 'top',
           anchor: 'end',
           offset: 2,
           color: color,
           font: { size: 10, weight: 'bold' },
-          formatter: (value) => value > 0 ? value : '' // Only show label if > 0
+          formatter: (value) => value > 0 ? value : ''
         }
       }],
     },
@@ -332,21 +337,20 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
       responsive: true,
       maintainAspectRatio: false,
       layout: {
-        padding: { top: 20 } // Space for the top data labels
+        padding: { top: 25 } // Extra room for data labels
       },
       plugins: { 
         legend: { display: false },
         tooltip: { mode: 'index', intersect: false },
-        // --- ANNOTATION (AVERAGE LINE) CONFIG ---
         annotation: {
           annotations: {
             line1: {
               type: 'line',
               yMin: average,
               yMax: average,
-              borderColor: 'rgba(255, 99, 132, 0.7)', // Contrasting Red-ish color
+              borderColor: 'rgba(255, 99, 132, 0.7)', 
               borderWidth: 2,
-              borderDash: [6, 6], // Dashed effect
+              borderDash: [6, 6],
               label: {
                 display: true,
                 content: `Avg: ${average}`,
@@ -373,13 +377,13 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
         y: {
           beginAtZero: true,
           ticks: { precision: 0 },
-          // Add a little extra space at the top so labels don't get cut off
-          suggestedMax: values.length > 0 ? Math.max(...values) + 2 : 10 
+          suggestedMax: values.length > 0 ? Math.max(...values) + 3 : 10 
         }
       }
     },
   });
 }
+
 function updateDashboard(data) {
   const cleanData = data.filter((row) => row["Inbound Count (SUM)"] != null);
   const total = cleanData.length;
