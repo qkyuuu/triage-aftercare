@@ -232,6 +232,9 @@ const response = await fetch(url);
 function renderRSCCCharts(data) {
   const dailyData = {};
 
+  // DEBUG: Check the console (F12) to see exactly what strings are in your data
+  console.log("Sample Data Row:", data[0]);
+
   data.forEach((row) => {
     const dateStr = row["Inbound Message Date"];
     if (!dateStr) return;
@@ -241,6 +244,7 @@ function renderRSCCCharts(data) {
     }
 
     const count = parseInt(row["Inbound Count (SUM)"]) || 0;
+    // Standardize to lowercase to prevent "Closed" vs "closed" mismatches
     const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
 
     // 1. Total Sent (All records)
@@ -251,12 +255,12 @@ function renderRSCCCharts(data) {
       dailyData[dateStr].responded += count;
     }
 
-    // 3. Total Closed (Logic: stage is exactly 'closed')
-    if (stage === "closed") {
+    // 3. Total Closed (FIXED: Changed from === to .includes)
+    if (stage.includes("closed")) {
       dailyData[dateStr].closed += count;
     }
 
-    // 4. For Response (Logic: stage is 'for response' or 'pending')
+    // 4. For Response (Logic: includes 'for response' or 'pending')
     if (stage.includes("for response") || stage.includes("pending")) {
       dailyData[dateStr].forResponse += count;
     }
@@ -288,7 +292,6 @@ function renderRSCCCharts(data) {
   renderSingleChart("chartForResponse", "For Response", displayLabels, 
     sortedDates.map(d => dailyData[d].forResponse), "#f39c12", "rgba(243, 156, 18, 0.05)", stepSize);
 }
-
 function renderSingleChart(id, label, labels, values, color, bgColor, stepSize = 1) {
   const ctx = document.getElementById(id);
   if (!ctx) return;
