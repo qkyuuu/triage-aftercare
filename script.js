@@ -199,25 +199,31 @@ async function fetchAndDisplayReport() {
   if (!start || !end) return showToast("Please select a date range!", "warning");
 
   try {
-    const response = await fetch(`fetch_report.php?region=${region}&start=${start}&end=${end}`);
+    const response = await fetch(`fetch_report.php?region=${encodeURIComponent(region)}&start=${start}&end=${end}`);
     
-    // Check if the response is actually JSON
-    if (!response.ok) throw new Error("Network response was not ok");
+    if (!response.ok) throw new Error("Server error: " + response.status);
     
     const data = await response.json();
 
-    if (category === "rscc") {
-      // ONLY run RSCC logic
-      renderRSCCCharts(data);
-      console.log("RSCC Performance Loaded");
-    } else {
-      // ONLY run After-care logic
-      updateDashboard(data);
-      console.log("After Care Service Loaded");
+    // If the PHP script returned an error object instead of a data array
+    if (data.error) {
+        console.error("SQL Database Error:", data.error);
+        return showToast("Database Query Failed", "danger");
     }
+
+    if (!data || data.length === 0) {
+      return showToast("No data found for this selection.", "warning");
+    }
+
+    if (category === "rscc") {
+      renderRSCCCharts(data);
+    } else {
+      updateDashboard(data);
+    }
+    
   } catch (e) {
-    console.error(e);
-    showToast("Error fetching data. Check database connection.", "danger");
+    console.error("Fetch Error:", e);
+    showToast("Error fetching data. Check console for details.", "danger");
   }
 }
 
