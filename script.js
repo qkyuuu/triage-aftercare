@@ -256,8 +256,8 @@ function renderRSCCCharts(data) {
     }
 
     // 3. Total Closed (FIXED: Changed from === to .includes)
-    if (stage.includes("closed")) {
-      dailyData[dateStr].closed += count;
+    if (stage.includes("closed") || stage.includes("handled") || stage.includes("resolved")) {
+        dailyData[dateStr].closed += count;
     }
 
     // 4. For Response (Logic: includes 'for response' or 'pending')
