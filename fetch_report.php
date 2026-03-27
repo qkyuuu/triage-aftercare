@@ -6,11 +6,16 @@ $region = $_GET['region'] ?? '';
 $start = $_GET['start'] ?? '';
 $end = $_GET['end'] ?? '';
 
-// Pad dates for SQL BETWEEN if only Month is selected
-$start_query = (strlen($start) == 7) ? $start . "-01" : $start;
-$end_query = (strlen($end) == 7) ? $end . "-31" : $end;
+// FIX: If the date is YYYY-MM, convert to YYYY-MM-DD
+if (strlen($start) === 7) { 
+    $start_query = $start . "-01"; 
+    // This creates a date for the end of the month
+    $end_query = date("Y-m-t", strtotime($start_query)); 
+} else {
+    $start_query = $start;
+    $end_query = $end;
+}
 
-// NOTE: I removed an invisible non-breaking space after SELECT that often causes SQL errors
 $sql = "SELECT 
     inbound_count AS [Inbound Count (SUM)], 
     inbound_message_date AS [Inbound Message Date], 
@@ -28,13 +33,12 @@ $params = [$region, $start_query, $end_query];
 $stmt = sqlsrv_query($conn, $sql, $params);
 
 if ($stmt === false) {
-    // Return actual error details for debugging
     die(json_encode(["error" => sqlsrv_errors()]));
 }
 
 $data = [];
 while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
-    // CRITICAL: Convert DateTime object to string for JSON
+    // FIX: Convert PHP DateTime objects to strings so JSON doesn't break
     if ($row['Inbound Message Date'] instanceof DateTime) {
         $row['Inbound Message Date'] = $row['Inbound Message Date']->format('Y-m-d');
     }
