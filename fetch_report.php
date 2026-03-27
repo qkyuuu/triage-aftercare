@@ -6,9 +6,12 @@ $region = $_GET['region'] ?? '';
 $start = $_GET['start'] ?? '';
 $end = $_GET['end'] ?? '';
 
+$start_query = (strlen($start) == 7) ? $start . "-01" : $start;
+$end_query = (strlen($end) == 7) ? $end . "-31" : $end;
+
 $sql = "SELECT 
     inbound_count AS [Inbound Count (SUM)], 
-    inbound_message_date AS [Inbound Message Date], -- ADDED THIS LINE
+    inbound_message_date AS [Inbound Message Date], -- THIS WAS MISSING
     routing_stage AS [Routing Stage (in) (Message)], 
     global_area AS [Country (in) (Message)], 
     macro_tracker AS [Macro Tracker (Message)], 
@@ -19,7 +22,7 @@ $sql = "SELECT
 FROM triage_uploads 
 WHERE region = ? AND inbound_message_date BETWEEN ? AND ?";
 
-$params = [$region, $start, $end];
+$params = [$region, $start_query, $end_query];
 
 $stmt = sqlsrv_query($conn, $sql, $params);
 
