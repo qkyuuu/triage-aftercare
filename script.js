@@ -256,12 +256,21 @@ function renderRSCCCharts(data) {
     }
 
     // 3. Total Closed (FIXED: Changed from === to .includes)
-    if (stage.includes("closed") || stage.includes("handled") || stage.includes("resolved")) {
-        dailyData[dateStr].closed += count;
+    if (
+      stage.includes("closed") || 
+      stage.includes("handled") || 
+      stage.includes("resolved") || 
+      stage.includes("non-actionable") // <--- This matches your After-care 17 items
+    ) {
+      dailyData[dateStr].closed += count;
     }
 
     // 4. For Response (Logic: includes 'for response' or 'pending')
-    if (stage.includes("for response") || stage.includes("pending")) {
+    if (
+      stage.includes("for response") || 
+      stage.includes("pending") || 
+      stage === "new"
+    ) {
       dailyData[dateStr].forResponse += count;
     }
   });
