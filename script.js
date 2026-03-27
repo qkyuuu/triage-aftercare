@@ -672,21 +672,27 @@ document.getElementById("csvUpload").addEventListener("change", function (e) {
   if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const workbook = XLSX.read(new Uint8Array(e.target.result), {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, {
         type: "array",
+        cellDates: true, // Tells XLSX to parse serial numbers into JS Date objects
+        dateNF: 'yyyy-mm-dd' // Sets the format pattern for the strings
       });
+
       handleFileProcess(
         XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {
           defval: null,
-        }),
+          raw: false // CRITICAL: Uses the formatted date string instead of the raw float
+        })
       );
     };
     reader.readAsArrayBuffer(file);
-  } else {
+} else {
+    // CSV parsing via PapaParse already handles dates as strings, so this stays the same
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: (r) => handleFileProcess(r.data),
     });
-  }
+}
 });
