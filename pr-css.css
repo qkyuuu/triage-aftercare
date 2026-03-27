@@ -521,6 +521,8 @@ body {
 .bar-label{
   display: grid;
   place-items:center;
+  color: #FFFFFF;
+  font-weight:700;
 }
 /* Tooltip on hover */
 .bar:hover::after {
