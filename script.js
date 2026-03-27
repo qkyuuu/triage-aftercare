@@ -249,9 +249,9 @@ function renderRSCCCharts(data) {
     }
 
     monthlyData[month].sent += count;
-    if (stage.includes("responded")) {
-      monthlyData[month].responded += count;
-    }
+    if (stage.includes("responded")) { 
+    monthlyData[month].responded += count;
+}
   });
 
   const labels = Object.keys(monthlyData).sort(
