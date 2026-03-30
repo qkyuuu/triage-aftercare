@@ -162,22 +162,22 @@
             <div class="performance-grid">
               <div class="metric-box">
                 <div class="text-secondary fw-bold">RSCC Performance</div>
-                <hr />
+                <hr style="margin:0.5rem 0" />
                 <div class="small">Total Sent to SCC</div>
                 <span id="totalSent" class="main-metric">0</span>
-                <hr />
+                <hr style="margin:0.5rem 0" />
                 <div class="small">Total Responded</div>
                 <span id="totalResponded" class="main-metric">0</span>
                 <div id="totalRespondedPct" class="sub-metric">(0%)</div>
-                <hr />
+                <hr style="margin:0.5rem 0" />
                 <div class="small">Total Closed</div>
                 <span id="totalClosed" class="main-metric">0</span>
                 <div id="totalClosedPct" class="sub-metric">(0%)</div>
-                <hr />
+                <hr style="margin:0.5rem 0" />
                 <div class="small">For Response</div>
                 <span id="forResponse" class="main-metric">0</span>
                 <div id="forResponsePct" class="sub-metric">(0%)</div>
-                <hr />
+                <hr style="margin:0.5rem 0"/>
                 <div class="small">Routed to CSS</div>
                 <span id="routedToCSS" class="main-metric">0</span>
                 <div id="routedToCSSPct" class="sub-metric">(0%)</div>
