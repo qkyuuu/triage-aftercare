@@ -200,19 +200,19 @@
                     id="journeyContainer"
                   >
                     <div class="journey-badge flex-fill">
-                      <h3 id="count-retention">0</h3>
+                      <h2 id="count-retention">0</h2>
                       <small class="text-muted">Retention</small>
                     </div>
                     <div class="journey-badge flex-fill">
-                      <h3 id="count-fans">0</h3>
+                      <h2 id="count-fans">0</h2>
                       <small class="text-muted">Fans</small>
                     </div>
                     <div class="journey-badge flex-fill">
-                      <h3 id="count-usage">0</h3>
+                      <h2 id="count-usage">0</h2>
                       <small class="text-muted">Usage</small>
                     </div>
                     <div class="journey-badge flex-fill">
-                      <h3 id="count-prospecting">0</h3>
+                      <h2 id="count-prospecting">0</h2>
                       <small class="text-muted">Prospecting</small>
                     </div>
                   </div>
