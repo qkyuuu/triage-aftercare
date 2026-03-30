@@ -177,6 +177,9 @@
                 <div class="small">For Response</div>
                 <span id="forResponse" class="main-metric">0</span>
                 <div id="forResponsePct" class="sub-metric">(0%)</div>
+                <div class="small">Routed to CSS</div>
+                <span id="forResponse" class="main-metric">0</span>
+                <div id="forResponsePct" class="sub-metric">(0%)</div>
               </div>
 
               <div class="d-flex flex-column gap-3">
