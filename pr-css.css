@@ -85,7 +85,7 @@ body {
 
 /* --- Dashboard Components --- */
 .report-container {
-  background: #ffffff;
+  background-color: #ffffff !important;
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
