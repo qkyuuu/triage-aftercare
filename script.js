@@ -237,33 +237,27 @@ function renderRSCCCharts(data) {
     if (!dateStr) return;
 
     if (!dailyData[dateStr]) {
-        dailyData[dateStr] = { sent: 0, responded: 0, closed: 0, forResponse: 0 };
+        dailyData[dateStr] = { sent: 0, responded: 0, closed: 0, forResponse: 0, routedToCSS: 0 };
     }
 
-    // FIX: Change this to 1 to count rows (matching After-care) 
-    // instead of summing the "Inbound Count (SUM)" column.
     const count = 1; 
-    
-    const stage = row["Routing Stage (in) (Message)"]; 
+    const stage = row["Routing Stage (in) (Message)"]; // This maps to 'routing_stage' in DB
 
-    // 1. Total Sent
     dailyData[dateStr].sent += count;
 
-    // 2. Total Responded
-    if (stage === "Responded To") {
+    if (stage === "Responded") {
         dailyData[dateStr].responded += count;
     }
-
-    // 3. Total Closed (This will now total exactly 17)
     if (stage === "Non-Actionable") {
         dailyData[dateStr].closed += count;
     }
-
-    // 4. For Response
-    if (stage === "New" || stage === "For Response") {
+    if (stage === "Pending") {
         dailyData[dateStr].forResponse += count;
     }
-});
+    if (stage === "New") {
+        dailyData[dateStr].routedToCSS += count;
+    }
+  });
 
   const sortedDates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
   
@@ -391,28 +385,36 @@ function updateDashboard(data) {
   if (total === 0) return;
 
   const responded = cleanData.filter(
-    (row) => row["Routing Stage (in) (Message)"] === "Responded To",
+    (row) => row["Routing Stage (in) (Message)"] === "Responded",
   ).length;
+
+  // Criteria: Non-Actionable
   const nonActionable = cleanData.filter(
     (row) => row["Routing Stage (in) (Message)"] === "Non-Actionable",
   ).length;
-  const forResponse = cleanData.filter((row) =>
-    ["New", "For Response"].includes(row["Routing Stage (in) (Message)"]),
+
+  // Criteria: Pending
+  const pending = cleanData.filter(
+    (row) => row["Routing Stage (in) (Message)"] === "Pending",
+  ).length;
+
+  // Criteria: New
+  const routedToCSS = cleanData.filter(
+    (row) => row["Routing Stage (in) (Message)"] === "New",
   ).length;
 
   document.getElementById("totalSent").innerText = total;
   document.getElementById("totalResponded").innerText = responded;
-  document.getElementById("totalRespondedPct").innerText =
-    `(${((responded / total) * 100).toFixed(1)}%)`;
+  document.getElementById("totalRespondedPct").innerText = `(${((responded / total) * 100).toFixed(1)}%)`;
+  
   document.getElementById("totalClosed").innerText = nonActionable;
-  document.getElementById("totalClosedPct").innerText =
-    `(${((nonActionable / total) * 100).toFixed(1)}%)`;
-  document.getElementById("forResponse").innerText = forResponse;
-  document.getElementById("forResponsePct").innerText =
-    `(${((forResponse / total) * 100).toFixed(1)}%)`;
-  document.getElementById("routedToCSS").innerText = forResponse;
-  document.getElementById("routedToCSSPct").innerText =
-    `(${((forResponse / total) * 100).toFixed(1)}%)`;
+  document.getElementById("totalClosedPct").innerText = `(${((nonActionable / total) * 100).toFixed(1)}%)`;
+  
+  document.getElementById("forResponse").innerText = pending;
+  document.getElementById("forResponsePct").innerText = `(${((pending / total) * 100).toFixed(1)}%)`;
+  
+  document.getElementById("routedToCSS").innerText = routedToCSS;
+  document.getElementById("routedToCSSPct").innerText = `(${((routedToCSS / total) * 100).toFixed(1)}%)`;
 
   // Helper for Top 4 charts
   const getTop4AndOthers = (countsObj) => {
