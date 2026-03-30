@@ -473,9 +473,9 @@ function updateDashboard(data) {
         `
         <div class="d-flex align-items-center gap-2 w-100">
           <div style="min-width: 160px;"><span class="fw-bold small">${name}</span></div>
-          <div style="width: 45px; text-align: right;"><span class="text-muted small">${pct}%</span></div>
+          <div style="width: 45px; text-align: right;"><span class="text-muted medium">${pct}%</span></div>
           <div class="flex-grow-1">
-            <div class="progress-bg" style="height: 10px; background: #eee; border-radius: 5px; overflow: hidden;">
+            <div class="progress-bg" style="height: 30px; background: #eee; border-radius: 5px; overflow: hidden;">
               <div style="width: ${pct}%; height: 100%; background: ${colors[index] || colors[4]}; transition: width 0.5s;"></div>
             </div>
           </div>
