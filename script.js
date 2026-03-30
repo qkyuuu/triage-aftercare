@@ -410,6 +410,9 @@ function updateDashboard(data) {
   document.getElementById("forResponse").innerText = forResponse;
   document.getElementById("forResponsePct").innerText =
     `(${((forResponse / total) * 100).toFixed(1)}%)`;
+  document.getElementById("routedToCSS").innerText = forResponse;
+  document.getElementById("routedToCSSPct").innerText =
+    `(${((forResponse / total) * 100).toFixed(1)}%)`;
 
   // Helper for Top 4 charts
   const getTop4AndOthers = (countsObj) => {
