@@ -56,7 +56,7 @@ body {
 
 .page-area {
   margin-left: 340px;
-  margin-top: 70px;
+  margin-top: 70px;#
   padding: 20px 5% 20px 5%; /* 5% of the screen width on both sides */
 }
 
@@ -591,4 +591,11 @@ body {
   .bottom-row {
     grid-template-columns: 1fr;
   }
+}
+/* Add this to your pr-css.css file */
+#afterCareView .report-container,
+#rsccView .report-container {
+    background-color: #ffffff !important;
+    padding: 20px; /* Provides a small buffer to prevent edge bleeding */
+    border-radius: 4px;
 }
