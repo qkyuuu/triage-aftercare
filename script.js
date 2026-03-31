@@ -616,6 +616,15 @@ function sendDashboardEmail(targetEmail) {
     scale: 1,
     useCORS: true,
     backgroundColor: "#ffffff",
+    onclone: (clonedDoc) => {
+        // Find the element in the cloned document and force its background to white
+        const report = clonedDoc.querySelector(
+            category === "rscc" ? "#rsccView .report-container" : "#afterCareView .report-container"
+        );
+        if (report) {
+            report.style.backgroundColor = "#ffffff";
+        }
+    }
   }).then((canvas) => {
     const base64Image = canvas.toDataURL("image/jpeg", 0.6);
     const dateText = document.getElementById(
