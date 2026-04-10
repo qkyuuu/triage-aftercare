@@ -146,6 +146,50 @@
             <div id="uploadStatus" class="mt-2 text-center" style="display: none;"></div>
           </div>
         </div>
+        <div class="sidebar-section px-4 p-3 mt-3" style="background-color: #fff5f5; border-top: 1px solid #ffcccc;">
+    <button 
+        type="button" 
+        id="toggleDeleteBtn" 
+        class="btn btn-outline-danger btn-sm w-100 d-flex justify-content-between align-items-center"
+        style="border-style: solid; font-weight: 600;"
+    >
+        <span><i class="bi bi-trash3 me-2"></i>Manage Data</span>
+        <i class="bi bi-chevron-down toggle-icon" id="deleteToggleIcon"></i>
+    </button>
+
+    <div id="deleteCollapseContent" style="display: none;">
+        <p class="text-danger mt-2 mb-2" style="font-size: 11px; line-height: 1.2;">
+            <i class="bi bi-exclamation-triangle-fill"></i> Warning: This action permanently removes records from the database.
+        </p>
+        
+        <div class="mb-2">
+            <label class="form-label small fw-bold">Region</label>
+            <select id="deleteRegion" class="form-select form-select-sm">
+                <option value="ALL">ALL REGIONS</option>
+                <option value="ASIA">ASIA</option>
+                <option value="AMERICA">AMERICA</option>
+                <option value="EMEA">EMEA</option>
+            </select>
+        </div>
+        
+        <div class="mb-2">
+            <label class="form-label small fw-bold">Date Range</label>
+            <input type="text" id="deleteDatePicker" class="form-control form-control-sm" placeholder="Select dates...">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label small fw-bold">Admin Password</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-danger text-white border-danger"><i class="bi bi-shield-lock"></i></span>
+                <input type="password" id="deletePassword" class="form-control border-danger" placeholder="Required">
+            </div>
+        </div>
+
+        <button type="button" id="confirmDeleteBtn" class="btn btn-danger btn-sm w-100">
+            Confirm Deletion
+        </button>
+    </div>
+</div>
       </aside>
 
       <main class="page-area">
