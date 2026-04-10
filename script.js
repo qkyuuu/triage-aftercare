@@ -35,8 +35,16 @@ function validateFormat(data) {
 
 document.addEventListener("DOMContentLoaded", function () {
   // 1. Initial Setup
-  initDatePicker("aftercare");
-  latpickr("#deleteDatePicker", { mode: "range", dateFormat: "Y-m-d" });
+  // Initial Setup
+initDatePicker("aftercare");
+
+// Corrected: flatpickr with 'f' and static: true for hidden containers
+flatpickr("#deleteDatePicker", { 
+    mode: "range", 
+    dateFormat: "Y-m-d",
+    static: true, // Helps positioning inside hidden/collapsed sidebars
+    monthSelectorType: "static" 
+});
   // 2. Handle Report Category Toggle
   const categorySelect = document.getElementById("reportCategory");
   if (categorySelect) {
