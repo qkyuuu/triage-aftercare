@@ -420,6 +420,16 @@ function updateDashboard(data) {
   
   document.getElementById("routedToCSS").innerText = routedToCSS;
   document.getElementById("routedToCSSPct").innerText = `(${((routedToCSS / total) * 100).toFixed(1)}%)`;
+
+  const uncategorized = cleanData.filter(row => {
+    const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
+    return !stage.includes("responded") && 
+           !stage.includes("non-actionable") && 
+           !stage.includes("pending") && 
+           !stage.includes("for response") && 
+           !stage.includes("new");
+});
+console.log("Missing Rows Data:", uncategorized);
   // Helper for Top 4 charts
   const getTop4AndOthers = (countsObj) => {
     const entries = Object.entries(countsObj).sort((a, b) => b[1] - a[1]);
