@@ -608,10 +608,16 @@ document.getElementById("confirmDeleteBtn")?.addEventListener("click", async fun
     const dateRange = document.getElementById("deleteDatePicker").value;
     const password = document.getElementById("deletePassword").value;
 
+    // 1. Basic Validation Feedback
     if (!dateRange) return showToast("Please select a date range to delete", "warning");
     if (!password) return showToast("Admin password required", "danger");
 
-    if (!confirm(`Are you sure you want to delete data for ${region} in range ${dateRange}? This cannot be undone.`)) return;
+    // 2. Confirmation Dialog
+    const confirmMsg = `Are you sure you want to delete data for ${region} in range ${dateRange}? This cannot be undone.`;
+    if (!confirm(confirmMsg)) return;
+
+    // 3. Show "Processing" feedback
+    showToast("Processing deletion request...", "info");
 
     try {
         const response = await fetch("delete_data.php", {
@@ -619,15 +625,27 @@ document.getElementById("confirmDeleteBtn")?.addEventListener("click", async fun
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ region, dateRange, password }),
         });
+        
         const result = await response.json();
+
         if (result.success) {
-            showToast("Data deleted successfully", "success");
+            // 4. Success Feedback
+            showToast(result.message, "success");
+            
+            // Optional: Reset fields and close the sidebar section
+            document.getElementById("deletePassword").value = "";
+            document.getElementById("deleteDatePicker").value = "";
             document.getElementById("deleteCollapseContent").style.display = "none";
+            document.getElementById("deleteToggleIcon")?.classList.remove("rotate-icon");
+            
         } else {
+            // 5. Error Feedback (e.g., Wrong Password)
             showToast(result.message || "Deletion failed", "danger");
         }
     } catch (e) {
-        showToast("Server error occurred", "danger");
+        // 6. Network/Server Error Feedback
+        showToast("Server error: Could not reach the database.", "danger");
+        console.error("Deletion Error:", e);
     }
 });
 async function saveToDatabase() {
