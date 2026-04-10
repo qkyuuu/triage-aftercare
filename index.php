@@ -112,39 +112,78 @@
           <hr class="sidebar-divider" />
         </div>
           
-        <div class="sidebar-section px-4 p-3" style="background-color:#f2f2f2">
-          <button 
-            type="button" 
-            id="toggleUploadBtn" 
-            class="btn btn-outline-primary btn-sm w-100 d-flex justify-content-between align-items-center"
-            style="border-style: dashed; font-weight: 600;"
-          >
-            <span><i class="bi bi-cloud-arrow-up me-2"></i>Upload New Data</span>
-            <i class="bi bi-chevron-down toggle-icon" id="toggleIcon"></i>
-          </button>
+<div class="sidebar-section px-4 p-3" style="background-color:#f2f2f2">
+  <button 
+    type="button" 
+    id="toggleUploadBtn" 
+    class="btn btn-outline-primary btn-sm w-100 d-flex justify-content-between align-items-center"
+    style="border-style: dashed; font-weight: 600;"
+  >
+    <span><i class="bi bi-cloud-arrow-up me-2"></i>Upload New Data</span>
+    <i class="bi bi-chevron-down toggle-icon" id="toggleIcon"></i>
+  </button>
 
-          <div id="uploadCollapseContent" style="display: none;">
-            <div class="my-3">
-              <label class="form-label small fw-bold">Select Region</label>
-              <select id="uploadRegion" class="form-select form-select-sm">
-                <option selected>Select Region...</option>
-                <option value="ASIA">ASIA</option>
-                <option value="AMERICA">AMERICA</option>
-                <option value="EMEA">EMEA</option>
-              </select>
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Select File</label>
-              <input class="form-control form-control-sm" type="file" id="csvUpload" accept=".csv, .xlsx, .xls" />
-            </div>
+  <div id="uploadCollapseContent" style="display: none;">
+    <div class="my-3">
+      <label class="form-label small fw-bold">Select Region</label>
+      <select id="uploadRegion" class="form-select form-select-sm">
+        <option selected>Select Region...</option>
+        <option value="ASIA">ASIA</option>
+        <option value="AMERICA">AMERICA</option>
+        <option value="EMEA">EMEA</option>
+      </select>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label small fw-bold">Select File</label>
+      <input class="form-control form-control-sm" type="file" id="csvUpload" accept=".csv, .xlsx, .xls" />
+    </div>
 
-            <button type="button" id="dbSaveBtn" class="btn btn-primary btn-sm w-100">
-              Save to Database
-            </button>
-            
-            <div id="uploadStatus" class="mt-2 text-center" style="display: none;"></div>
-          </div>
+    <button type="button" id="dbSaveBtn" class="btn btn-primary btn-sm w-100">
+      Save to Database
+    </button>
+    
+    <div id="uploadStatus" class="mt-2 text-center" style="display: none;"></div>
+  </div>
+
+  <hr class="my-3" style="opacity: 0.1;">
+
+  <button 
+    type="button" 
+    id="toggleDeleteBtn" 
+    class="btn btn-outline-danger btn-sm w-100 d-flex justify-content-between align-items-center"
+    style="border-style: solid; font-weight: 600; font-size: 0.75rem;"
+  >
+    <span><i class="bi bi-trash3 me-2"></i>Manage Data</span>
+    <i class="bi bi-chevron-down toggle-icon" id="deleteToggleIcon"></i>
+  </button>
+
+  <div id="deleteCollapseContent" style="display: none; background: #fff; padding: 10px; border-radius: 5px; margin-top: 10px; border: 1px solid #ffcccc;">
+    <div class="mb-2">
+      <label class="form-label small fw-bold" style="font-size: 11px;">Region to Clear</label>
+      <select id="deleteRegion" class="form-select form-select-sm">
+        <option value="ALL">ALL REGIONS</option>
+        <option value="ASIA">ASIA</option>
+        <option value="AMERICA">AMERICA</option>
+        <option value="EMEA">EMEA</option>
+      </select>
+    </div>
+    
+    <div class="mb-2">
+      <label class="form-label small fw-bold" style="font-size: 11px;">Date Range</label>
+      <input type="text" id="deleteDatePicker" class="form-control form-control-sm" placeholder="Select dates...">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label small fw-bold" style="font-size: 11px;">Admin Password</label>
+      <input type="password" id="deletePassword" class="form-control form-control-sm border-danger" placeholder="Enter password">
+    </div>
+
+    <button type="button" id="confirmDeleteBtn" class="btn btn-danger btn-sm w-100" style="font-size: 11px;">
+      Confirm Deletion
+    </button>
+  </div>
+</div>
       </aside>
 
       <main class="page-area">
