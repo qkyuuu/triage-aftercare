@@ -233,29 +233,39 @@ function renderRSCCCharts(data) {
   const dailyData = {};
 
   data.forEach((row) => {
-    const dateStr = row["Inbound Message Date"];
+    // 1. Handle potential field name differences for the date
+    const dateStr = row["Inbound Message Date"] || row["inbound_message_date"];
     if (!dateStr) return;
 
-    if (!dailyData[dateStr]) {
-        dailyData[dateStr] = { sent: 0, responded: 0, closed: 0, forResponse: 0, routedToCSS: 0 };
+    // Clean the date (strip timestamp if present) to group by day
+    const cleanDate = dateStr.split('T')[0];
+
+    if (!dailyData[cleanDate]) {
+        dailyData[cleanDate] = { sent: 0, responded: 0, closed: 0, forResponse: 0, routedToCSS: 0 };
     }
 
+    // 2. Normalize the stage text for "Contains" logic
+    const stage = (row["Routing Stage (in) (Message)"] || row["routing_stage"] || "").toLowerCase();
     const count = 1; 
-    const stage = row["Routing Stage (in) (Message)"]; // This maps to 'routing_stage' in DB
 
-    dailyData[dateStr].sent += count;
+    dailyData[cleanDate].sent += count;
 
-    if (stage === "Responded") {
-        dailyData[dateStr].responded += count;
+    // 3. Apply the New Criteria
+    // Total Responded: contains "responded"
+    if (stage.includes("responded")) {
+        dailyData[cleanDate].responded += count;
     }
-    if (stage === "Non-Actionable") {
-        dailyData[dateStr].closed += count;
+    // Total Closed: strictly "non-actionable"
+    if (stage.includes("non-actionable")) {
+        dailyData[cleanDate].closed += count;
     }
-    if (stage === "Pending") {
-        dailyData[dateStr].forResponse += count;
+    // For Response: includes "pending", "for response", AND "bypass"
+    if (stage.includes("pending") || stage.includes("for response") || stage.includes("bypass")) {
+        dailyData[cleanDate].forResponse += count;
     }
-    if (stage === "New") {
-        dailyData[dateStr].routedToCSS += count;
+    // Routed to CSS: contains "new"
+    if (stage.includes("new")) {
+        dailyData[cleanDate].routedToCSS += count;
     }
   });
 
@@ -272,7 +282,7 @@ function renderRSCCCharts(data) {
     return d.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
   });
 
-  // Render all 4 Charts
+  // Render Charts using the updated dailyData
   renderSingleChart("chartSent", "Total Sent", displayLabels, 
     sortedDates.map(d => dailyData[d].sent), "#071952", "rgba(7, 25, 82, 0.05)", stepSize);
 
@@ -395,11 +405,13 @@ function updateDashboard(data) {
     return stage.includes("non-actionable");
   }).length;
 
-  // 3. For Response: Looks for "Pending" or "For Response"
-  const pending = cleanData.filter((row) => {
-    const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
-    return stage.includes("pending") || stage.includes("for response");
-  }).length;
+  // 3. For Response: Now includes 'pending', 'for response', AND 'bypass'
+const pending = cleanData.filter((row) => {
+    const stage = (row["Routing Stage (in) (Message)"] || row["routing_stage"] || "").toLowerCase();
+    return stage.includes("pending") || 
+           stage.includes("for response") || 
+           stage.includes("bypass");
+}).length;
 
   // 4. Routed to CSS: Looks for "New"
   const routedToCSS = cleanData.filter((row) => {
