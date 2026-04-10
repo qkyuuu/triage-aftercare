@@ -673,16 +673,42 @@ function showToast(message, type = "info") {
   new bootstrap.Toast(toastEl).show();
 }
 
-// Sidebar Upload toggle
+// --- Updated Sidebar Toggles ---
 const toggleBtn = document.getElementById("toggleUploadBtn");
 const collapseContent = document.getElementById("uploadCollapseContent");
 const toggleIcon = document.getElementById("toggleIcon");
 
+const toggleDeleteBtn = document.getElementById("toggleDeleteBtn");
+const deleteCollapseContent = document.getElementById("deleteCollapseContent");
+const deleteToggleIcon = document.getElementById("deleteToggleIcon");
+
+// Upload Toggle Logic
 if (toggleBtn) {
   toggleBtn.addEventListener("click", function () {
     const isHidden = collapseContent.style.display === "none";
     collapseContent.style.display = isHidden ? "block" : "none";
     toggleIcon.classList.toggle("rotate-icon", isHidden);
+
+    // Auto-close Manage Data if opening Upload
+    if (isHidden && deleteCollapseContent) {
+      deleteCollapseContent.style.display = "none";
+      if (deleteToggleIcon) deleteToggleIcon.classList.remove("rotate-icon");
+    }
+  });
+}
+
+// Manage Data (Delete) Toggle Logic
+if (toggleDeleteBtn) {
+  toggleDeleteBtn.addEventListener("click", function () {
+    const isHidden = deleteCollapseContent.style.display === "none";
+    deleteCollapseContent.style.display = isHidden ? "block" : "none";
+    if (deleteToggleIcon) deleteToggleIcon.classList.toggle("rotate-icon", isHidden);
+
+    // Auto-close Upload if opening Manage Data
+    if (isHidden && collapseContent) {
+      collapseContent.style.display = "none";
+      if (toggleIcon) toggleIcon.classList.remove("rotate-icon");
+    }
   });
 }
 
