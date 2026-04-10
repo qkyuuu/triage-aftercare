@@ -384,26 +384,31 @@ function updateDashboard(data) {
   const total = cleanData.length;
   if (total === 0) return;
 
-  const responded = cleanData.filter(
-    (row) => row["Routing Stage (in) (Message)"] === "Responded",
-  ).length;
+  const responded = cleanData.filter((row) => {
+    const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
+    return stage.includes("responded");
+  }).length;
 
   // Criteria: Non-Actionable
-  const nonActionable = cleanData.filter(
-    (row) => row["Routing Stage (in) (Message)"] === "Non-Actionable",
-  ).length;
+  const nonActionable = cleanData.filter((row) => {
+    const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
+    return stage.includes("non-actionable");
+  }).length;
 
-  // Criteria: Pending
-  const pending = cleanData.filter(
-    (row) => row["Routing Stage (in) (Message)"] === "Pending",
-  ).length;
+  // 3. For Response: Looks for "Pending" or "For Response"
+  const pending = cleanData.filter((row) => {
+    const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
+    return stage.includes("pending") || stage.includes("for response");
+  }).length;
 
-  // Criteria: New
-  const routedToCSS = cleanData.filter(
-    (row) => row["Routing Stage (in) (Message)"] === "New",
-  ).length;
+  // 4. Routed to CSS: Looks for "New"
+  const routedToCSS = cleanData.filter((row) => {
+    const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
+    return stage.includes("new");
+  }).length;
 
   document.getElementById("totalSent").innerText = total;
+  
   document.getElementById("totalResponded").innerText = responded;
   document.getElementById("totalRespondedPct").innerText = `(${((responded / total) * 100).toFixed(1)}%)`;
   
@@ -415,7 +420,6 @@ function updateDashboard(data) {
   
   document.getElementById("routedToCSS").innerText = routedToCSS;
   document.getElementById("routedToCSSPct").innerText = `(${((routedToCSS / total) * 100).toFixed(1)}%)`;
-
   // Helper for Top 4 charts
   const getTop4AndOthers = (countsObj) => {
     const entries = Object.entries(countsObj).sort((a, b) => b[1] - a[1]);
