@@ -29,11 +29,11 @@ try {
     // 1. UPDATED SQL: Using the real column names from your screenshot
     // Table name assumed 'dbo.triage_table' - change if necessary
     if ($region === "ALL") {
-        $sql = "DELETE FROM [dbo].[triage_table] 
+        $sql = "DELETE FROM [dbo].[triage_uploads] 
                 WHERE [inbound_date] BETWEEN ? AND ?";
         $params = array($startDate, $endDate);
     } else {
-        $sql = "DELETE FROM [dbo].[triage_table] 
+        $sql = "DELETE FROM [dbo].[triage_uploads] 
                 WHERE [region] = ? 
                 AND [inbound_date] BETWEEN ? AND ?";
         $params = array($region, $startDate, $endDate);
