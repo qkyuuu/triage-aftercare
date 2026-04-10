@@ -36,7 +36,7 @@ function validateFormat(data) {
 document.addEventListener("DOMContentLoaded", function () {
   // 1. Initial Setup
   initDatePicker("aftercare");
-
+  latpickr("#deleteDatePicker", { mode: "range", dateFormat: "Y-m-d" });
   // 2. Handle Report Category Toggle
   const categorySelect = document.getElementById("reportCategory");
   if (categorySelect) {
@@ -130,6 +130,15 @@ document.addEventListener("DOMContentLoaded", function () {
           title: "🚀 Share Your Report",
           description: "Capture the dashboard and send it via email.",
           side: "left",
+          align: "center",
+        },
+      },
+      {
+        element: "#toggleDeleteBtn", // Add this step
+        popover: {
+          title: "🗑️ Manage Database",
+          description: "Use this to clear specific regions or date ranges from the database.",
+          side: "right",
           align: "center",
         },
       },
@@ -594,7 +603,33 @@ function calculateSentiments(data) {
   });
   return s;
 }
+document.getElementById("confirmDeleteBtn")?.addEventListener("click", async function() {
+    const region = document.getElementById("deleteRegion").value;
+    const dateRange = document.getElementById("deleteDatePicker").value;
+    const password = document.getElementById("deletePassword").value;
 
+    if (!dateRange) return showToast("Please select a date range to delete", "warning");
+    if (!password) return showToast("Admin password required", "danger");
+
+    if (!confirm(`Are you sure you want to delete data for ${region} in range ${dateRange}? This cannot be undone.`)) return;
+
+    try {
+        const response = await fetch("delete_data.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ region, dateRange, password }),
+        });
+        const result = await response.json();
+        if (result.success) {
+            showToast("Data deleted successfully", "success");
+            document.getElementById("deleteCollapseContent").style.display = "none";
+        } else {
+            showToast(result.message || "Deletion failed", "danger");
+        }
+    } catch (e) {
+        showToast("Server error occurred", "danger");
+    }
+});
 async function saveToDatabase() {
   const statusDiv = document.getElementById("uploadStatus");
   const uploadRegion = document.getElementById("uploadRegion").value;
