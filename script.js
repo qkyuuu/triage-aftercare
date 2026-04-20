@@ -24,6 +24,7 @@ function validateFormat(data) {
   const missing = REQUIRED_HEADERS.filter((h) => !actualHeaders.includes(h));
 
   if (missing.length > 0) {
+    console.log("Missing Columns:", missing);
     showToast(
       `Invalid Format! Missing columns: ${missing.join(", ")}`,
       "danger",
