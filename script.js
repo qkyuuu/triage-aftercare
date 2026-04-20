@@ -1,5 +1,6 @@
 const REQUIRED_HEADERS = [
   "Inbound Count (SUM)",
+  "Inbound Message",
   "Inbound Message Date",
   "Routing Stage (in) (Message)",
   "Country (in) (Message)",
