@@ -661,7 +661,7 @@ async function saveToDatabase() {
   const uploadRegion = document.getElementById("uploadRegion").value;
   const fileInput = document.getElementById("csvUpload");
 
-  if (!tempUploadData)
+  if (!tempUploadData || tempUploadData.length === 0)
     return showToast("Please upload a file first!", "danger");
   if (uploadRegion === "Select Region...")
     return showToast("Please select a region", "warning");
