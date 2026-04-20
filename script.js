@@ -20,8 +20,13 @@ let datePickerEnd = null;
 let charts = {};
 
 function validateFormat(data) {
-  if (!data || data.length === 0) return false;
-  const actualHeaders = Object.keys(data[0]);
+  if (!data || data.length === 0) {
+    showToast("The file appears to be empty.", "danger");
+    return false;
+  }
+  
+  // Trim headers to avoid invisible space issues during validation
+  const actualHeaders = Object.keys(data[0]).map(h => h.trim());
   const missing = REQUIRED_HEADERS.filter((h) => !actualHeaders.includes(h));
 
   if (missing.length > 0) {
@@ -37,16 +42,16 @@ function validateFormat(data) {
 
 document.addEventListener("DOMContentLoaded", function () {
   // 1. Initial Setup
-  // Initial Setup
-initDatePicker("aftercare");
+  initDatePicker("aftercare");
 
-// Corrected: flatpickr with 'f' and static: true for hidden containers
-flatpickr("#deleteDatePicker", { 
+  // flatpickr with 'f' and static: true for hidden containers
+  flatpickr("#deleteDatePicker", { 
     mode: "range", 
     dateFormat: "Y-m-d",
     static: true, // Helps positioning inside hidden/collapsed sidebars
     monthSelectorType: "static" 
-});
+  });
+
   // 2. Handle Report Category Toggle
   const categorySelect = document.getElementById("reportCategory");
   if (categorySelect) {
@@ -144,7 +149,7 @@ flatpickr("#deleteDatePicker", {
         },
       },
       {
-        element: "#toggleDeleteBtn", // Add this step
+        element: "#toggleDeleteBtn", 
         popover: {
           title: "🗑️ Manage Database",
           description: "Use this to clear specific regions or date ranges from the database.",
@@ -213,20 +218,19 @@ async function fetchAndDisplayReport() {
   const region = document.getElementById("viewRegion").value;
   const start = document.getElementById("startDate").value;
   const end = document.getElementById("endDate").value;
-  // Inside fetchAndDisplayReport()
-const url = `fetch_report.php?region=${encodeURIComponent(region)}&start=${start}&end=${end}`;
-const response = await fetch(url);
+
   if (region === "Select Region...") return showToast("Please select a region!", "warning");
   if (!start || !end) return showToast("Please select a date range!", "warning");
 
   try {
-    const response = await fetch(`fetch_report.php?region=${encodeURIComponent(region)}&start=${start}&end=${end}`);
+    const url = `fetch_report.php?region=${encodeURIComponent(region)}&start=${start}&end=${end}`;
+    const response = await fetch(url);
     
     if (!response.ok) throw new Error("Server error: " + response.status);
     
     const data = await response.json();
 
-    // If the PHP script returned an error object instead of a data array
+    // If the PHP script returned an error object
     if (data.error) {
         console.error("SQL Database Error:", data.error);
         return showToast("Database Query Failed", "danger");
@@ -252,37 +256,32 @@ function renderRSCCCharts(data) {
   const dailyData = {};
 
   data.forEach((row) => {
-    // 1. Handle potential field name differences for the date
+    // Handle potential field name differences for the date
     const dateStr = row["Inbound Message Date"] || row["inbound_message_date"];
     if (!dateStr) return;
 
-    // Clean the date (strip timestamp if present) to group by day
+    // Group by day (YYYY-MM-DD)
     const cleanDate = dateStr.split('T')[0];
 
     if (!dailyData[cleanDate]) {
         dailyData[cleanDate] = { sent: 0, responded: 0, closed: 0, forResponse: 0, routedToCSS: 0 };
     }
 
-    // 2. Normalize the stage text for "Contains" logic
     const stage = (row["Routing Stage (in) (Message)"] || row["routing_stage"] || "").toLowerCase();
     const count = 1; 
 
     dailyData[cleanDate].sent += count;
 
-    // 3. Apply the New Criteria
-    // Total Responded: contains "responded"
+    // Apply Logic Criteria
     if (stage.includes("responded")) {
         dailyData[cleanDate].responded += count;
     }
-    // Total Closed: strictly "non-actionable"
     if (stage.includes("non-actionable")) {
         dailyData[cleanDate].closed += count;
     }
-    // For Response: includes "pending", "for response", AND "bypass"
     if (stage.includes("pending") || stage.includes("for response") || stage.includes("bypass")) {
         dailyData[cleanDate].forResponse += count;
     }
-    // Routed to CSS: contains "new"
     if (stage.includes("new")) {
         dailyData[cleanDate].routedToCSS += count;
     }
@@ -290,7 +289,7 @@ function renderRSCCCharts(data) {
 
   const sortedDates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
   
-  // Dynamic Step Calculation
+  // Dynamic X-Axis Step Calculation
   const totalDays = sortedDates.length;
   let stepSize = 1;
   if (totalDays > 31 && totalDays <= 62) stepSize = 7;
@@ -301,7 +300,7 @@ function renderRSCCCharts(data) {
     return d.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
   });
 
-  // Render Charts using the updated dailyData
+  // Render RSCC Charts
   renderSingleChart("chartSent", "Total Sent", displayLabels, 
     sortedDates.map(d => dailyData[d].sent), "#071952", "rgba(7, 25, 82, 0.05)", stepSize);
 
@@ -321,14 +320,13 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
 
   if (charts[id]) charts[id].destroy();
 
-  // Calculate Average
+  // Calculate Average for Annotation
   const average = values.length > 0 
     ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) 
     : 0;
 
   charts[id] = new Chart(ctx, {
     type: "line",
-    // Explicitly include DataLabels in the plugins array
     plugins: [ChartDataLabels], 
     data: {
       labels: labels,
@@ -341,7 +339,6 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
         tension: 0.3, 
         pointRadius: labels.length > 40 ? 0 : 4,
         pointBackgroundColor: color,
-        // Data Labels settings
         datalabels: {
           align: 'top',
           anchor: 'end',
@@ -356,12 +353,11 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
       responsive: true,
       maintainAspectRatio: false,
       layout: {
-        padding: { top: 30, right: 10 } // Added more top padding for the Avg tag
+        padding: { top: 30, right: 10 } 
       },
       plugins: { 
         legend: { display: false },
         tooltip: { mode: 'index', intersect: false },
-        // Annotation settings
         annotation: {
           annotations: {
             line1: {
@@ -375,7 +371,7 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
                 display: true,
                 content: `Avg: ${average}`,
                 position: 'end',
-                yAdjust: -15, // Moves the label slightly above the line
+                yAdjust: -15,
                 backgroundColor: 'rgba(255, 99, 132, 0.8)',
                 color: '#fff',
                 font: { size: 10, weight: 'bold' },
@@ -400,7 +396,6 @@ function renderSingleChart(id, label, labels, values, color, bgColor, stepSize =
         y: {
           beginAtZero: true,
           ticks: { precision: 0 },
-          // Ensure the graph ceiling is high enough to see the average line and labels
           suggestedMax: Math.max(...values, parseFloat(average)) + 3
         }
       }
@@ -418,62 +413,41 @@ function updateDashboard(data) {
     return stage.includes("responded");
   }).length;
 
-  // Criteria: Non-Actionable
   const nonActionable = cleanData.filter((row) => {
     const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
     return stage.includes("non-actionable");
   }).length;
 
-  // 3. For Response: Now includes 'pending', 'for response', AND 'bypass'
-const pending = cleanData.filter((row) => {
+  const pending = cleanData.filter((row) => {
     const stage = (row["Routing Stage (in) (Message)"] || row["routing_stage"] || "").toLowerCase();
-    return stage.includes("pending") || 
-           stage.includes("for response") || 
-           stage.includes("bypass");
-}).length;
+    return stage.includes("pending") || stage.includes("for response") || stage.includes("bypass");
+  }).length;
 
-  // 4. Routed to CSS: Looks for "New"
   const routedToCSS = cleanData.filter((row) => {
     const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
     return stage.includes("new");
   }).length;
 
   document.getElementById("totalSent").innerText = total;
-  
   document.getElementById("totalResponded").innerText = responded;
   document.getElementById("totalRespondedPct").innerText = `(${((responded / total) * 100).toFixed(1)}%)`;
-  
   document.getElementById("totalClosed").innerText = nonActionable;
   document.getElementById("totalClosedPct").innerText = `(${((nonActionable / total) * 100).toFixed(1)}%)`;
-  
   document.getElementById("forResponse").innerText = pending;
   document.getElementById("forResponsePct").innerText = `(${((pending / total) * 100).toFixed(1)}%)`;
-  
   document.getElementById("routedToCSS").innerText = routedToCSS;
   document.getElementById("routedToCSSPct").innerText = `(${((routedToCSS / total) * 100).toFixed(1)}%)`;
 
-  const uncategorized = cleanData.filter(row => {
-    const stage = (row["Routing Stage (in) (Message)"] || "").toLowerCase();
-    return !stage.includes("responded") && 
-           !stage.includes("non-actionable") && 
-           !stage.includes("pending") && 
-           !stage.includes("for response") && 
-           !stage.includes("new");
-});
-console.log("Missing Rows Data:", uncategorized);
-  // Helper for Top 4 charts
   const getTop4AndOthers = (countsObj) => {
     const entries = Object.entries(countsObj).sort((a, b) => b[1] - a[1]);
     if (entries.length <= 4) return entries;
     const top4 = entries.slice(0, 4);
-    const othersCount = entries
-      .slice(4)
-      .reduce((sum, entry) => sum + entry[1], 0);
+    const othersCount = entries.slice(4).reduce((sum, entry) => sum + entry[1], 0);
     top4.push(["Others", othersCount]);
     return top4;
   };
 
-  // Area Chart
+  // Area Chart (By Country)
   const areaCounts = {};
   cleanData.forEach((row) => {
     const area = row["Country (in) (Message)"] || "Unknown";
@@ -487,20 +461,17 @@ console.log("Missing Rows Data:", uncategorized);
     const colors = ["#071952", "#088395", "#37B7C3", "#64B5F6", "#757575"];
     topAreas.forEach(([area, count], index) => {
       const displayHeight = maxAreaCount > 0 ? (count / maxAreaCount) * 95 : 0;
-      areaContainer.insertAdjacentHTML(
-        "beforeend",
-        `
+      areaContainer.insertAdjacentHTML("beforeend", `
         <div class="bar-wrapper">
           <div class="bar" style="height: ${displayHeight}%; background: ${colors[index] || colors[4]};" title="${area}: ${count}">
             <span class="bar-label">${count}</span>
           </div>
           <div class="small mt-1 fw-bold text-nowrap" style="font-size: 11px;">${area}</div>
-        </div>`,
-      );
+        </div>`);
     });
   }
 
-  // Account Handles
+  // Account Handles Bar Chart
   const accountCounts = {};
   cleanData.forEach((row) => {
     const acc = row["Account"] || "Unknown";
@@ -513,9 +484,7 @@ console.log("Missing Rows Data:", uncategorized);
     const colors = ["#071952", "#088395", "#37B7C3", "#64B5F6", "#757575"];
     topAccounts.forEach(([name, count], index) => {
       const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-      accountContainer.insertAdjacentHTML(
-        "beforeend",
-        `
+      accountContainer.insertAdjacentHTML("beforeend", `
         <div class="d-flex align-items-center gap-2 w-100">
           <div style="min-width: 160px;"><span class="fw-bold small">${name}</span></div>
           <div style="width: 45px; text-align: right;"><span class="text-muted medium">${pct}%</span></div>
@@ -525,19 +494,18 @@ console.log("Missing Rows Data:", uncategorized);
             </div>
           </div>
           <div style="min-width: 35px; text-align: right; font-size: 12px;">${count}</div>
-        </div>`,
-      );
+        </div>`);
     });
   }
 
-  // Journey
+  // Journey Macro Counts
   const journey = calculateJourney(cleanData);
   document.getElementById("count-retention").innerText = journey.Retention;
   document.getElementById("count-fans").innerText = journey.Fans;
   document.getElementById("count-usage").innerText = journey.Usage;
   document.getElementById("count-prospecting").innerText = journey.Prospecting;
 
-  // Platform List
+  // Platform Distribution
   const platformCounts = {};
   cleanData.forEach((row) => {
     const platform = row["Social Network"] || "Other";
@@ -549,19 +517,18 @@ console.log("Missing Rows Data:", uncategorized);
     platformList.innerHTML += `<div class="d-flex justify-content-between small border-bottom mb-1"><span>${name}</span><b>${count}</b></div>`;
   });
 
-  // Sentiments
+  // Sentiment Bars
   const sentiments = calculateSentiments(cleanData);
   const updateBar = (id, count) => {
     const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-    document.getElementById(`label-${id}`).innerText =
-      `${id.charAt(0).toUpperCase() + id.slice(1)} (${count})`;
+    document.getElementById(`label-${id}`).innerText = `${id.charAt(0).toUpperCase() + id.slice(1)} (${count})`;
     document.getElementById(`bar-${id}`).style.width = pct + "%";
   };
   updateBar("positive", sentiments.Positive);
   updateBar("negative", sentiments.Negative);
   updateBar("neutral", sentiments.Neutral);
 
-  // Message Type Donut
+  // Message Type Donut (Custom SVG)
   const typeCounts = {};
   cleanData.forEach((row) => {
     const mType = row["Message Type"] || "Unknown";
@@ -613,20 +580,19 @@ function calculateSentiments(data) {
   });
   return s;
 }
+
+// Database Management: Delete Data Logic
 document.getElementById("confirmDeleteBtn")?.addEventListener("click", async function() {
     const region = document.getElementById("deleteRegion").value;
     const dateRange = document.getElementById("deleteDatePicker").value;
     const password = document.getElementById("deletePassword").value;
 
-    // 1. Basic Validation Feedback
     if (!dateRange) return showToast("Please select a date range to delete", "warning");
     if (!password) return showToast("Admin password required", "danger");
 
-    // 2. Confirmation Dialog
     const confirmMsg = `Are you sure you want to delete data for ${region} in range ${dateRange}? This cannot be undone.`;
     if (!confirm(confirmMsg)) return;
 
-    // 3. Show "Processing" feedback
     showToast("Processing deletion request...", "info");
 
     try {
@@ -639,25 +605,19 @@ document.getElementById("confirmDeleteBtn")?.addEventListener("click", async fun
         const result = await response.json();
 
         if (result.success) {
-            // 4. Success Feedback
             showToast(result.message, "success");
-            
-            // Optional: Reset fields and close the sidebar section
             document.getElementById("deletePassword").value = "";
             document.getElementById("deleteDatePicker").value = "";
             document.getElementById("deleteCollapseContent").style.display = "none";
             document.getElementById("deleteToggleIcon")?.classList.remove("rotate-icon");
-            
         } else {
-            // 5. Error Feedback (e.g., Wrong Password)
             showToast(result.message || "Deletion failed", "danger");
         }
     } catch (e) {
-        // 6. Network/Server Error Feedback
         showToast("Server error: Could not reach the database.", "danger");
-        console.error("Deletion Error:", e);
     }
 });
+
 async function saveToDatabase() {
   const statusDiv = document.getElementById("uploadStatus");
   const uploadRegion = document.getElementById("uploadRegion").value;
@@ -736,7 +696,7 @@ function showToast(message, type = "info") {
   new bootstrap.Toast(toastEl).show();
 }
 
-// --- Updated Sidebar Toggles ---
+// Sidebar Toggles
 const toggleBtn = document.getElementById("toggleUploadBtn");
 const collapseContent = document.getElementById("uploadCollapseContent");
 const toggleIcon = document.getElementById("toggleIcon");
@@ -745,14 +705,12 @@ const toggleDeleteBtn = document.getElementById("toggleDeleteBtn");
 const deleteCollapseContent = document.getElementById("deleteCollapseContent");
 const deleteToggleIcon = document.getElementById("deleteToggleIcon");
 
-// Upload Toggle Logic
 if (toggleBtn) {
   toggleBtn.addEventListener("click", function () {
     const isHidden = collapseContent.style.display === "none";
     collapseContent.style.display = isHidden ? "block" : "none";
     toggleIcon.classList.toggle("rotate-icon", isHidden);
 
-    // Auto-close Manage Data if opening Upload
     if (isHidden && deleteCollapseContent) {
       deleteCollapseContent.style.display = "none";
       if (deleteToggleIcon) deleteToggleIcon.classList.remove("rotate-icon");
@@ -760,14 +718,12 @@ if (toggleBtn) {
   });
 }
 
-// Manage Data (Delete) Toggle Logic
 if (toggleDeleteBtn) {
   toggleDeleteBtn.addEventListener("click", function () {
     const isHidden = deleteCollapseContent.style.display === "none";
     deleteCollapseContent.style.display = isHidden ? "block" : "none";
     if (deleteToggleIcon) deleteToggleIcon.classList.toggle("rotate-icon", isHidden);
 
-    // Auto-close Upload if opening Manage Data
     if (isHidden && collapseContent) {
       collapseContent.style.display = "none";
       if (toggleIcon) toggleIcon.classList.remove("rotate-icon");
@@ -792,27 +748,37 @@ document.getElementById("csvUpload").addEventListener("change", function (e) {
   if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, {
-        type: "array",
-        cellDates: true, // Tells XLSX to parse serial numbers into JS Date objects
-        dateNF: 'yyyy-mm-dd' // Sets the format pattern for the strings
-      });
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {
+          type: "array",
+          cellDates: true,
+          dateNF: 'yyyy-mm-dd'
+        });
 
-      handleFileProcess(
-        XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {
-          defval: null,
-          raw: false // CRITICAL: Uses the formatted date string instead of the raw float
-        })
-      );
+        handleFileProcess(
+          XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {
+            defval: null,
+            raw: false
+          })
+        );
+      } catch (error) {
+        // Specifically handles corporate encryption/password protection
+        if (error.message && error.message.includes("Encrypted")) {
+          showToast("Error: This Excel file is encrypted/protected. Save as CSV and try again.", "danger");
+        } else {
+          showToast("Error reading Excel: " + error.message, "danger");
+        }
+        this.value = ""; // Reset the input so the user can re-upload
+      }
     };
     reader.readAsArrayBuffer(file);
-} else {
-    // CSV parsing via PapaParse already handles dates as strings, so this stays the same
+  } else {
+    // Standard CSV processing via PapaParse
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: (r) => handleFileProcess(r.data),
     });
-}
+  }
 });
